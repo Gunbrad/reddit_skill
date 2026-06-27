@@ -1,0 +1,243 @@
+<title>Enter Pro - 帖子 - 2026-06-27</title>
+<p>来源 run 20260627_114808_search，共 10 篇，全部纯文本帖（无生图）。已做 de-AI/原生化与事实核对；品牌露出 ≤1-2 个已验证能力，统一保留诚实边界（export≠zero migration、仍需人工 review）。</p>
+
+<h1>第一篇 — r/SaaS 源码导出踩坑</h1>
+<h2>Title</h2>
+<p>Do AI website builders actually let you own and export your code? A year of trial and error.</p>
+<h2>Body</h2>
+<p>Spent the last year bouncing between AI website builders for side projects. The "you own your code, just hit export" pitch was everywhere. Reality was messier.</p>
+<p>First export I got was a zip. Spent a whole weekend on the local environment — half the deps wouldn't install, api keys scattered across files I couldn't track down, and the deploy config pointed at folders that weren't even in the zip. Left it on the platform, too burnt to fight it.</p>
+<p>Tried two more tools after that. Same promise, same wall: dashboards with no real backend, configs that broke the second I added a real feature.</p>
+<p>The one that stuck was the one that does two-way GitHub sync — I can pull the project down, edit it, push back. Not magic, and they're upfront that export doesn't mean zero migration. But at least the code is actually mine to touch.</p>
+<p>Still don't trust any of these for client work yet. For people who've actually moved a project off one of these — how bad was the migration really, or am I overthinking it?</p>
+<p>Target Subreddit: r/SaaS or r/SideProject or r/indiehackers</p>
+<h2>评论设计</h2>
+<p>User 1: wait so if the platform owns your hosting and db how is that actually owning the code. seems like youre just renting space on their infra</p>
+<p>User 2 replies to User 1: the code ownership part means you can pull the full repo and run it elsewhere. the infra is separate. you're not locked into their postgres, you'd just have to migrate the data yourself</p>
+<p>User 3 replies to User 2: yeah thats the catch tho. moving the schema, auth flow and half the backend glue to your own server is still a project not a weekend thing</p>
+<p>User 2 replies to User 3: true, and their own docs basically say export doesn't mean zero migration. more honest than most builders who oversell the export</p>
+<hr/>
+<p>User 4: tried bolt before this. the export was literally unusable for me, broken env files and missing routes</p>
+<p>User 5 replies to User 4: same. UI looked great in preview but once i pulled the repo locally half the dynamic stuff was wired to their internal API that didn't ship with the export. basically a static shell</p>
+<p>User 6 replies to User 5: lovable was the same for me. at this point i assume all these tools have this issue unless you see the github sync working before you pay</p>
+<hr/>
+<p>User 7: does it let you swap the frontend stack? most of these force you into React + Vite + Tailwind. i needed Next.js for a project</p>
+<p>User 8 replies to User 7: pretty sure its locked to react vite tailwind typescript. if you need nextjs you'd use a local terminal agent instead</p>
+<hr/>
+<p>Standalone: the export theater is real / saved this for later / can confirm, same thing on bolt / interesting that they actually admit export isnt zero migration / is the github sync both ways or just import / im more worried about the database being portable than the code tbh</p>
+
+<h1>第二篇 — r/Businessowners 接手客户 AI 应用</h1>
+<h2>Title</h2>
+<p>A client built their app with AI, then paid me to take it over. Here's what was actually inside.</p>
+<h2>Body</h2>
+<p>A client came in last month needing someone to take over their app. They'd built it themselves with an AI website builder over a few weekends, no developer. Demo looked fine, they launched, got a few paying users, then things started breaking. That's when they called me.</p>
+<p>First thing I checked was whether I could see the source and actually own what I was about to maintain. The export was half-wired components with no structure. Fine, I can work with messy code. The deeper problems were the real issue: no auth that actually worked, no row-level security, a "database" that was one shared table with no permissions. Any user could see another user's data by poking the URL. The AI gave them a demo. It didn't give them the stuff demos don't cover.</p>
+<p>I've seen this half a dozen times this year. Pretty UI, almost no engineering underneath. Mostly I get asked to rebuild auth and payments from scratch — 2-3 weeks per client, and that's if the data model is clean, which it rarely is.</p>
+<p>Lately I've been steering newer clients toward tools that at least ship a real backend and let you hand the code to a terminal agent for the engineering pass. Still needs a human to review. Anyone else fixing these for clients — what's the first thing you check on handoff?</p>
+<p>Target Subreddit: r/Businessowners or r/freelance or r/web_design</p>
+<h2>评论设计</h2>
+<p>User 1: so which AI builder was it? bolt, lovable, v0? export works differently on each</p>
+<p>User 2 replies to User 1: bolt and lovable both let you export but its basically components with no backend wiring. v0 is even more of a design tool</p>
+<p>User 3 replies to User 1: the supabase part is what most people miss. they think owning the code means owning the stack, but the db rules and auth live somewhere else entirely</p>
+<hr/>
+<p>User 1: 2-3 weeks to rebuild auth and payments feels low for a real client app. what stack do you end up on?</p>
+<p>User 2 replies to User 1: usually a standard auth lib plus rebuilding the webhook flow so subscription state syncs to the db. the 2-3 weeks assumes a clean data model, which is rare</p>
+<p>User 3 replies to User 2: the data model is what kills you. one giant table with no relations took me a month to normalize before i could add permissions</p>
+<hr/>
+<p>User 1: this is exactly why ive been scared to use these for anything real. what if the tool shuts down or jacks up pricing</p>
+<p>User 2 replies to User 1: depends. some do github sync so you at least have the frontend. the backend services are where the lock-in lives</p>
+<hr/>
+<p>Standalone: saving this, im a solo founder and this is the nightmare im trying to avoid / the stripe webhook thing is the #1 thing these get wrong / wix is honest about what it is, the AI builders promise a "real app" and thats where people get burned / has anyone actually migrated one off with user data intact?</p>
+
+<h1>第三篇 — r/SideProject 可导出 vs 真可迁移</h1>
+<h2>Title</h2>
+<p>"You own the code" — I tested what actually happens when you try to use it somewhere else.</p>
+<h2>Body</h2>
+<p>I've been building side projects on a few AI builders for about a year. Every one has a "download source code" button and every landing page says you fully own what you make. So I tried migrating one project off, just to see.</p>
+<p>The frontend exports fine — standard React, npm install, runs on localhost. The part nobody talks about is the backend: auth, database, storage, functions, secrets. Most of it is wired into the platform's own infra. Your "exported" code is basically a frontend talking to APIs that don't exist anywhere else.</p>
+<p>What caught me off guard was one platform whose backend is just native PostgreSQL — not a proprietary API to reverse-engineer. Migration still isn't free: secrets, RLS rules, deploy config all take work. But the floor is way higher than a static shell.</p>
+<p>If anyone here has actually finished a full migration off an AI builder — which platform, and how much time did it cost you? Genuinely trying to figure out if I'm being unrealistic about the gap between "exportable" and "actually portable."</p>
+<p>Target Subreddit: r/SideProject or r/SaaS or r/webdev</p>
+<h2>评论设计</h2>
+<p>User 1: had the same on Bolt. exported, tried to deploy to my own VPS, half the auth functions 404'd because they called internal endpoints that only exist inside their platform</p>
+<p>User 2 replies to User 1: the "you own your code" pitch is technically true but its like owning a car without the keys</p>
+<hr/>
+<p>User 3: i was under the impression that postgres backend is also proprietary. can you actually take ownership of the db or is it still hosted on their cloud</p>
+<p>User 4 replies to User 3: its postgres but still hosted on their infra. exporting gives you a schema dump not a self-contained server. better than nothing, not the same as standing up your own</p>
+<hr/>
+<p>User 5: none of these even mention migration cost on their pricing pages. always "export anytime!" with zero asterisks</p>
+<p>User 6 replies to User 5: the docs always say something like "export includes frontend bundle and api client, backend services remain on platform"</p>
+<hr/>
+<p>User 7: counterpoint, if youre a solo founder building an mvp do you actually need to migrate in the first 6 months?</p>
+<p>User 8 replies to User 7: the risk is you get 10k users then pricing changes and migration is suddenly urgent with no exit plan</p>
+<hr/>
+<p>Standalone: saving this, been going back and forth between lovable and bolt / "exportable vs portable" should be required reading / wait does native postgres mean you could point a neon instance at it / the real question is whether you can find a dev willing to take over after the AI is done</p>
+
+<h1>第四篇 — r/ai_website_builder 导出代码可读性</h1>
+<h2>Title</h2>
+<p>The "export your code" promise breaks the moment you hand it to a real developer.</p>
+<h2>Body</h2>
+<p>I keep getting clients who exported their "full source code" from various AI website builders and tell me "I own it, I can hand it to any dev." Technically yes. Practically, not really.</p>
+<p>First thing a dev does is open the file structure. With most AI exports there isn't one worth talking about — components dumped into 2000-line files, state only the prompt understood, type defs that are decorative. Change a button label and the build breaks in two unrelated places. Then the backend stuff nobody checks: no RLS, endpoints wide open, hardcoded keys in client code.</p>
+<p>Export became a sales checkbox. It doesn't mean maintainable, auditable, or safe. The one builder where this felt different was one with a real visible file tree and an enforced React/TS stack you can actually browse — still rare.</p>
+<p>My rule now: if the export doesn't have a real folder structure, I tell clients to budget for a rewrite. Curious what other people use as their "is this salvageable" test?</p>
+<p>Target Subreddit: r/ai_website_builder or r/webdev or r/SaaS</p>
+<h2>评论设计</h2>
+<p>User 1: just because theres an "export" button doesnt mean you own the code in any real sense. github sync is the only thing that actually matters</p>
+<p>User 2 replies to User 1: had a guy whose "owned" codebase took me 3 weeks to untangle onto vercel. wouldve been faster to rewrite</p>
+<p>User 3 replies to User 1: a few do github sync now. the real issue is the git history is empty because the AI regenerates files wholesale instead of patching</p>
+<hr/>
+<p>User 4: a fixed React/Vite/TS stack isnt "owning the code," its owning a specific stack. if i want SvelteKit im rewriting</p>
+<p>User 5 replies to User 4: thats the tradeoff. fixed stack that works out of the box vs full flexibility you build yourself. cant really have both in a prompt-to-app tool</p>
+<hr/>
+<p>User 6: what does this actually cost? every "code ownership" pitch burns credits faster than the AI renders the page</p>
+<p>User 7 replies to User 6: credits disappear on every iteration. the pricing is the real hidden cost on most of these</p>
+<hr/>
+<p>User 8: the worst one is exporting the frontend, thinking youre done, then realizing auth and db rules are tied to the platform</p>
+<p>User 9 replies to User 8: stripe webhooks too. so many exported apps break the moment you move payments</p>
+<hr/>
+<p>Standalone: "you own the code" should be illegal marketing / the hardcoded API keys thing gets me every time / does it really show the file tree in the dashboard? most hide everything behind a preview iframe / bookmarking for the next client who asks why their "owned" code is unmaintainable</p>
+
+<h1>第五篇 — r/webdev MVP 交接防重写</h1>
+<h2>Title</h2>
+<p>I vibecoded my MVP. Hiring a real dev next week. How do I avoid the "rewrite everything" verdict?</p>
+<h2>Body</h2>
+<p>I vibecoded my MVP over the past two months — auth, stripe checkout, a dashboard. Shipped a beta, got a few paying users, and now I'm finally ready to hire a real full-stack dev to take it to production.</p>
+<p>Here's my fear: they open the repo on day one, scroll for ten minutes, and tell me "this needs a rewrite." I've read enough r/webdev to know the reputation AI-generated code has — dead logic, overkill abstractions, structure that only makes sense to the model that wrote it.</p>
+<p>One thing that might help on my end: it's on a builder that exposes a full file tree and syncs both ways with GitHub, so the dev can clone it, run it locally, and see what's actually there instead of getting a black box. Not sure if that changes anything or if they'll still want to torch it on sight.</p>
+<p>So before I hand this off — what's the bare minimum a handoff package needs so the dev doesn't immediately want to nuke it?</p>
+<p>Target Subreddit: r/webdev or r/SaaS or r/cscareerquestions</p>
+<h2>评论设计</h2>
+<p>User 1: been on the receiving end twice. both times the code was half-implemented features and zero tests. we rewrote ~80% but kept their file names, component structure and db schema so the founder felt we built on their work. push for "rewrite under the existing surface" before a full nuke</p>
+<p>User 2 replies to User 1: like a facade refactor. keep the public API the same, rewrite the guts. keeps confidence intact and gives the dev a clean internal architecture</p>
+<p>User 3 replies to User 1: if you can show the founder "same UX, 10x less code, tests passing" thats a win for everyone</p>
+<hr/>
+<p>User 4: honest question, whats your test coverage right now? if its zero your dev will want to rewrite, not because the code is bad but because theres no safety net</p>
+<p>User 5 replies to User 4: op here, its basically zero. is writing a test suite retroactively even feasible on code i dont fully understand?</p>
+<p>User 4 replies to User 5: totally. pick your 3-4 critical flows (signup, login, checkout) and write e2e tests. tests at the boundary let your dev refactor underneath without fear</p>
+<hr/>
+<p>User 6: the question is whether they rewrite in the same repo (you keep git history + deploy configs) or a new one (you lose all that). push hard for in-place refactor</p>
+<hr/>
+<p>User 7: as a freelancer my hard requirement before taking the job is access to the full source. not a deployed URL — the actual repo. if you cant show me the files i wont take the contract</p>
+<hr/>
+<p>Standalone: write a real README — data model, deploy flow, gotchas / check the git history before you do anything / make sure you actually have the source, some builders lock you in / what does your schema look like, real relationships or local storage with fake seed data / a short loom of you clicking through the product is worth more than any doc</p>
+
+<h1>第六篇 — r/learnprogramming 新手接手黑盒</h1>
+<h2>Title</h2>
+<p>My non-technical co-founder vibe-coded our React app in Claude. I'm a junior dev. Salvage or rebuild?</p>
+<h2>Body</h2>
+<p>Non-technical co-founder vibe-coded our internal client dashboard in Claude for ~3 months, then handed me the repo to "make prod ready." React + TypeScript + Tailwind, some Supabase glue. I'm a junior dev, ~2 years in.</p>
+<p>Cloned it last week, opened the file tree, felt sick. Every ~500 lines there's dead logic, half the components have props nothing passes, and there are 7 markdown files describing features that don't exist anywhere. I can read it fine but can't tell what's load-bearing vs hallucinated.</p>
+<p>I've been looking at tools that sync a web build to GitHub both ways so you can edit locally and keep working with a terminal agent — supposedly good for an inherited AI codebase. But I'm not sure that solves the core problem.</p>
+<p>Do I triage module by module with tests, or just tell him we rebuild from a clean spec? How do you even get a non-technical person to define what the app is supposed to do?</p>
+<p>Target Subreddit: r/learnprogramming or r/webdev or r/cscareerquestions</p>
+<h2>评论设计</h2>
+<p>User 1: before anyone pitches tools — the dead code accumulates because each new AI session forgets what the last one built. the 7 markdown files are claude promising things across sessions and never cleaning up</p>
+<p>User 2 replies to User 1: the real issue is theres no spec. write down what the app is SUPPOSED to do, mark features shipped vs aspirational, then you have a target to triage against</p>
+<p>User 3 replies to User 2: im one person and my co-founder doesnt read docs. how do i get a non-technical person to spec for a week?</p>
+<p>User 2 replies to User 3: you write the spec yourself based on what works, send a 1-page doc, and say "approve this or i dont touch the repo"</p>
+<hr/>
+<p>User 4: tested that kind of two-way sync on a ~40 file project. fine for standard edits, breaks if you rename a folder and move 3 files at once locally. read the changelog before any big refactor. also its vite/react/typescript only</p>
+<hr/>
+<p>User 5: hot take, if the dead-code ratio is what you describe i wouldnt salvage. rebuild from a clean spec</p>
+<p>User 6 replies to User 5: rebuilding the frontend fast just means youre back in a month with the same question about auth, rls and webhooks</p>
+<hr/>
+<p>User 7: nobody said tests. write functional tests for whatever works in the UI now, then you have a safety net to refactor against</p>
+<hr/>
+<p>Standalone: write a runbook before you touch the code / check the git history, if he committed in giant walls git wont help you diff / try pointing a local terminal agent at the repo just for comprehension, its half the battle / your co-founder isnt the enemy, he just doesnt know what good handoff looks like / set the boundary now or you'll be rebuilding this 3 times</p>
+
+<h1>第七篇 — r/LocalLLaMA 别造交接即废的玩具</h1>
+<h2>Title</h2>
+<p>6 AI-generated apps, 6 rewrites. What I wish someone told me on day one.</p>
+<h2>Body</h2>
+<p>4 years as a non-technical founder. 6 apps "shipped" with various AI builders. Every one ended the same way: I hand the codebase to a dev friend, he spends a weekend with it, then quietly says "I should probably just rewrite this."</p>
+<p>The UI is always fine. It's the stuff underneath that kills you — auth that isn't really auth, stripe wired so it breaks the second a webhook fails, db rules that only work because nobody tested in prod, secrets in client code, no tests, no reproducible deploy.</p>
+<p>What finally clicked: the AI prototype is the easy 20%. The hard 80% is post-demo infrastructure — real auth, real database with RLS, real payment state, code you can own and push to GitHub. I eventually moved to a platform that bakes more of that in, but that's not really the point.</p>
+<p>Stop pretending your weekend demo is a product. Until the infra underneath is real, the handoff is just a rewrite order with extra steps. Anyone actually broken this loop, or is the rewrite just the cost of building this way?</p>
+<p>Target Subreddit: r/LocalLLaMA or r/SaaS or r/indiehackers</p>
+<h2>评论设计</h2>
+<p>User 1: the real issue is they optimize for looking complete. a clean-looking dashboard makes a non-technical founder think its "done" — the data model, error states, edge cases dont exist</p>
+<p>User 2 replies to User 1: ive had founders hand over a prototype expecting me to "just add payments" and im reverse-engineering their webhook logic from one broken component</p>
+<p>User 1 replies to User 2: and when you say it needs 3 weeks of real work they look at you like you scammed them, because the AI made it look like a 2 hour job</p>
+<hr/>
+<p>User 3: counterpoint: if youre non-technical, the rewrite IS the product. you pay in time what you cant pay in cash. most of us cant afford to NOT ship the weekend demo</p>
+<p>User 4 replies to User 3: the point isnt ship fast vs slow, its dont expect a dev to rescue a codebase that was never built to be rescued. you can ship the demo AND set up auth/db/deploy properly, takes an extra day not a month</p>
+<hr/>
+<p>User 5: been through this. used a builder, handed it to me, i rewrote in cursor anyway. at least cursor lets me keep the file structure instead of flat folders named Card1, Card2, Card3</p>
+<hr/>
+<p>User 6: the github sync + code ownership thing is the actual moat for me. i dont care if the code is mid, i care i can git clone it and not be locked into a proprietary runtime</p>
+<p>User 7 replies to User 6: "exportable" and "zero migration cost" are different things tho, you still wire up your own deploy + secrets + db hosting</p>
+<hr/>
+<p>Standalone: the over-engineering is real, AI gave me a redux store with 14 slices for a todo app / "your handoff is just a rewrite order with extra steps" is painfully accurate / the real problem is founders treat "the AI built it" as "it was built" / if you cant explain how your auth works, you dont have auth</p>
+
+<h1>第八篇 — r/aiagents CLI 对 agent 难用</h1>
+<h2>Title</h2>
+<p>Why are deployment CLIs so painful for AI agents to drive? An honest take.</p>
+<h2>Body</h2>
+<p>Spent the last few months letting my AI coding agent drive deployments from the terminal. Unpopular opinion: most deployment CLIs were never built for AI agents.</p>
+<p>We blame the agent for flaky deploys, but often the CLI is the problem: output mixes human status text, ansi codes and spinners in one stream so the agent regexes through noise to find the URL; exit codes are decorative ("deployed" and "deployed but health check timed out" both return 0); interactive TUI prompts make the agent stall; the real result is buried 200 lines deep in the log.</p>
+<p>So I've been thinking about what an "agent-first" CLI looks like: stable JSON output, a real machine-readable status enum, idempotent commands, one structured response with the live URL and rollback target. I rolled my own wrappers for a while, then found one CLI whose deploy command returns the live URL in a single structured field — no log scraping. (It's just a thin publish CLI your existing agent calls, not a local repo agent.)</p>
+<p>Honestly the bigger blocker is cultural — teams still write CLIs for the human running them, not the model driving them. Anyone actually solved the exit-code-0-on-partial-failure problem cleanly?</p>
+<p>Target Subreddit: r/aiagents or r/AI_Agents or r/devops</p>
+<h2>评论设计</h2>
+<p>User 1: this is the part of the agent dev loop nobody warns you about. you spend half your time debugging the tool surface, not the model. i built a thin wrapper just to normalize the json output, its duct tape at best</p>
+<p>User 2 replies to User 1: im running into the same exit-code-0-on-partial-deploy issue. been tee-ing to a log file then grepping for "live url" which is obviously terrible</p>
+<p>User 1 replies to User 2: forcing the wrapper to always emit a final result.status field with explicit enum values helped. the agent just reads that one line</p>
+<hr/>
+<p>User 3: we tried to let cursor drive our vercel + supabase deploy. vercel is too chatty, supabase throws interactive prompts at every step. ended up having the agent write a shell script and run that, which defeats the purpose</p>
+<p>User 4 replies to User 3: supabase has a --json flag on most things but its not on by default which feels intentional</p>
+<hr/>
+<p>User 5: i dont think its the tool, its the standards. nobody agreed what an agent deploy manifest looks like — yaml? function-call schema? until thats nailed down every tool bolts on its own half-solution</p>
+<hr/>
+<p>User 6: exit code 0 on failed deploys is a plague. github actions step "succeeded" but the app never came up because of a bad env var. the agent had no way to know unless it curled the health endpoint</p>
+<p>User 7 replies to User 6: a --wait-healthy flag with structured timeout errors would save so much debugging</p>
+<hr/>
+<p>Standalone: the ansi escape code thing is 30% of my agent debugging time / the "human first CLI" assumption is baked in even into docs / we're going to see a whole category of agent-native infra tools / best ive seen is a --json/--machine flag that defaults to human output</p>
+
+<h1>第九篇 — r/buildinpublic 终端 agent 两月复盘</h1>
+<h2>Title</h2>
+<p>2 months of driving my deployment platform from the terminal with an AI coding agent. The honest log.</p>
+<h2>Body</h2>
+<p>Solo dev. Two months ago I made a bet: stop opening my deployment platform's web dashboard. Deploys, env vars, domain bindings — all done by an AI coding agent in my terminal via a thin CLI that lets Claude Code call build / edit / publish / domain. (Disclosure: I use Enter's CLI for this. Not a paid post.)</p>
+<p>What it looks like: tmux, two panes, one runs the agent. I type "add forgot-password to login, then deploy," it makes the change, runs the test, publishes, sets the env var, rebinds the domain. I refresh the URL and go make coffee. Browser clicks: zero.</p>
+<p>What broke: function logs — the CLI doesn't surface them well yet, i tailed them separately twice when a deploy had a bad env var. Domain SSL propagation — first custom domain took 20 min and the agent kept reporting "still propagating," i verified DNS myself. Secrets — anything sensitive i still type in myself, im not letting an agent handle raw secret values. When it loops — i added a "if a deploy fails twice, stop and ask me" rule to avoid burning credits.</p>
+<p>Unexpected: i ship more often when deploy is a chat message, and i read diffs more carefully because im the one saying "ship it."</p>
+<p>Wouldn't do this for anything touching money or PII without reviewing the diff — AI still hallucinates auth code that looks fine and isn't. For solo small stuff it's the fastest workflow I've found. Anyone else gone terminal-only — where did it fall apart for you?</p>
+<p>Target Subreddit: r/buildinpublic or r/SideProject or r/indiehackers</p>
+<h2>评论设计</h2>
+<p>User 1: how are you handling the deploy logs? if the publish step silently fails inside the cloud functions layer, do you ssh in or is there a command to tail function logs in real time?</p>
+<p>User 2 replies to User 1: thats what the post was getting at. build/publish/domain are exposed but the function runtime logs feel like an afterthought. i wrote a small wrapper to tail them into the tmux pane, its hacky</p>
+<hr/>
+<p>User 3: im confused about the stripe piece. does it handle subscription state (cancel at period end, failed payment retry, grace period) or do you still write that yourself?</p>
+<p>User 4 replies to User 3: it handles the infrastructure (receiving the webhook, exposing an endpoint) but the subscription state machine is still on you. honestly fine, i wouldnt trust any AI builder to make that decision for me</p>
+<hr/>
+<p>User 5: how does this compare to lovable? the UI gen is smooth there but the local terminal agent piece is whats missing for me</p>
+<p>User 6 replies to User 5: with lovable i had to download the zip and pretend it was a normal repo. running a terminal agent in the same project is the differentiator for the terminal-first crowd</p>
+<hr/>
+<p>User 7: whats stopping the agent from eating your credits during a bad retry storm?</p>
+<p>User 8 replies to User 7: a hard rule in the agent config: "if a deploy returns the same error twice, stop and surface it." before that i burned a weeks credits in an afternoon on a broken migration</p>
+<hr/>
+<p>Standalone: the postgres + auth + storage all in one CLI call is the bit that gets me / the secrets part is where i draw the line too / "i ship more often because deploy is a chat message" is underrated / the AI-hallucinates-auth-code line is the most honest sentence here</p>
+
+<h1>第十篇 — r/kubernetes agent 部署权限</h1>
+<h2>Title</h2>
+<p>How are you scoping permissions when an AI coding agent wants to deploy from the terminal?</p>
+<h2>Body</h2>
+<p>Curious how others handle this. We let devs use Claude Code and Cursor in the terminal — the code is fine, the part that keeps me up is what happens when the agent wants to push it somewhere.</p>
+<p>Right now the agent has three paths, all bad: gets handed a kubeconfig and runs kubectl apply like CI (audit logs cant tell human from agent, same broad RBAC); bypasses the cluster and deploys to Vercel/Railway because its easier (now you have shadow IT in a K8s-first org); or files a ticket and waits (the AI speed advantage is gone).</p>
+<p>K8s RBAC wasn't designed for "this action was initiated by an agent on behalf of user X." Things we've tried: scoped service accounts with short-lived tokens (revocation is a pain), OPA/Gatekeeper tagging agent requests (day-2 rego cost is brutal), GitOps with PR approval (cleanest, but the merge-queue bottleneck just moves), and an API layer in front of the cluster that only exposes specific commands so the agent never gets raw cluster creds.</p>
+<p>(Disclosure: I work on one of those API-layer tools, so I'm biased toward that last option.) For teams not already on ArgoCD, the API-layer route seems like least resistance. Anyone running scoped service accounts in prod, or is it GitOps and a prayer for most of you?</p>
+<p>Target Subreddit: r/kubernetes or r/devops or r/AI_Agents</p>
+<h2>评论设计</h2>
+<p>User 1: GitOps with PR review. its the only one that scales. once you have 10+ devs and their agents pushing manifests you need the git layer as source of truth and a human on the diff</p>
+<p>User 2 replies to User 1: agreed but the PR review bottleneck just moves. our platform team became the merge queue. we wrote custom auto-merge policies per agent which felt worse than the original problem</p>
+<hr/>
+<p>User 3: none of this matters if the agent can still read your secrets. ive seen agents dump entire env files into prompts. an api layer is cute but if it can read your .env it owns you regardless</p>
+<p>User 4 replies to User 3: this is why i ran everything through dev containers for a while, contained the blast radius</p>
+<hr/>
+<p>User 5: OPA/Gatekeeper is underrated but you have to maintain the rego. one team wrote a nice admission webhook tagging requests with an agent-id label, broke in 3 months because nobody owned the rego</p>
+<p>User 6 replies to User 5: the day-2 cost is brutal. we ripped ours out and went with a thin api layer, didnt have bandwidth to babysit admission webhooks</p>
+<hr/>
+<p>User 7: for big orgs this is academic. your CISO will demand an audit log that clearly labels agent vs human, period. half these approaches cant produce that on demand</p>
+<hr/>
+<p>Standalone: cant believe this is still such a mess in 2026 / "GitOps and a prayer" lol real / the real question is what happens when the agent wants to deploy a database migration / scoped service accounts sound nice in a doc but the revocation story is a nightmare, we ended up with zombie tokens</p>

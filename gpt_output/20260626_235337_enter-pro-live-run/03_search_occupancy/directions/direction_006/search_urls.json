@@ -1,0 +1,152 @@
+{
+  "direction_id": "direction_006",
+  "query": "vibe coding codebase unmaintainable prompt drift",
+  "status": "success",
+  "target_url_count": 10,
+  "raw_url_count": 10,
+  "unique_url_count": 10,
+  "search_results_url": "https://www.reddit.com/search/?q=vibe+coding+codebase+unmaintainable+prompt+drift&cId=11a20353-3122-4598-a3a6-6096d2b15d24&iId=0c22a55c-f170-4f22-a8b0-8c0c96646aaf",
+  "error": null,
+  "items": [
+    {
+      "result_index": 1,
+      "post_url": "https://www.reddit.com/r/vibecoding/comments/1ufe5bg/scanned_429_vibecoded_repos_to_measure_how_much",
+      "post_id": "1ufe5bg",
+      "title": "Scanned 429 vibe-coded repos to measure how much they drift over time. Here's what I found.",
+      "subreddit": "vibecoding",
+      "age_text": "1d ago",
+      "votes": 51,
+      "comments": 64,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_006"
+      ]
+    },
+    {
+      "result_index": 2,
+      "post_url": "https://www.reddit.com/r/vibecoding/comments/1udpv82/anyone_elses_vibecoded_project_become_basically",
+      "post_id": "1udpv82",
+      "title": "Anyone else's vibe-coded project become basically untouchable after a few coding sessions?",
+      "subreddit": "vibecoding",
+      "age_text": "3d ago",
+      "votes": 0,
+      "comments": 71,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_006"
+      ]
+    },
+    {
+      "result_index": 3,
+      "post_url": "https://www.reddit.com/r/vibecoding/comments/1su03dk/vibe_coded_for_6_months_my_codebase_is_a_disaster",
+      "post_id": "1su03dk",
+      "title": "vibe coded for 6 months. my codebase is a disaster.",
+      "subreddit": "vibecoding",
+      "age_text": "2mo ago",
+      "votes": 1972,
+      "comments": 678,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_006"
+      ]
+    },
+    {
+      "result_index": 4,
+      "post_url": "https://www.reddit.com/r/LLMDevs/comments/1udpw9h/just_got_this_response_from_claude_what_is_going",
+      "post_id": "1udpw9h",
+      "title": "Just got this response from Claude. What is going on?",
+      "subreddit": "LLMDevs",
+      "age_text": "3d ago",
+      "votes": 348,
+      "comments": 200,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_006"
+      ]
+    },
+    {
+      "result_index": 5,
+      "post_url": "https://www.reddit.com/r/vibecoding/comments/1ucm7o4/if_ai_has_ruined_software_development_why_am_i",
+      "post_id": "1ucm7o4",
+      "title": "If AI has ruined software development, why am I coding in the sun with a pint and having a lovely time?",
+      "subreddit": "vibecoding",
+      "age_text": "4d ago",
+      "votes": 362,
+      "comments": 101,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_006"
+      ]
+    },
+    {
+      "result_index": 6,
+      "post_url": "https://www.reddit.com/r/claude/comments/1ug37s7/have_u_guys_seen_this",
+      "post_id": "1ug37s7",
+      "title": "Have u guys seen this?",
+      "subreddit": "claude",
+      "age_text": "6h ago",
+      "votes": 105,
+      "comments": 134,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_006"
+      ]
+    },
+    {
+      "result_index": 7,
+      "post_url": "https://www.reddit.com/r/vibecoding/comments/1ueofgc/weve_officially_crossed_the_point_of_no_return",
+      "post_id": "1ueofgc",
+      "title": "We’ve officially crossed the point of no return.",
+      "subreddit": "vibecoding",
+      "age_text": "2d ago",
+      "votes": 173,
+      "comments": 149,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_006"
+      ]
+    },
+    {
+      "result_index": 8,
+      "post_url": "https://www.reddit.com/r/ClaudeAI/comments/1ucsdqv/the_shoe_has_dropped",
+      "post_id": "1ucsdqv",
+      "title": "The shoe has dropped",
+      "subreddit": "ClaudeAI",
+      "age_text": "4d ago",
+      "votes": 290,
+      "comments": 145,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_006"
+      ]
+    },
+    {
+      "result_index": 9,
+      "post_url": "https://www.reddit.com/r/ClaudeAI/comments/1rdfgqj/vibe_coding_on_existing_codebases_is_a_nightmare",
+      "post_id": "1rdfgqj",
+      "title": "Vibe coding on existing codebases is a nightmare — how do you manage context across multiple features?",
+      "subreddit": "ClaudeAI",
+      "age_text": "4mo ago",
+      "votes": 4,
+      "comments": 33,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_006"
+      ]
+    },
+    {
+      "result_index": 10,
+      "post_url": "https://www.reddit.com/r/vibecoding/comments/1tke8zl/how_do_you_know_whats_actually_going_on_in_your",
+      "post_id": "1tke8zl",
+      "title": "How do you know what's actually going on in your codebase?",
+      "subreddit": "vibecoding",
+      "age_text": "1mo ago",
+      "votes": 0,
+      "comments": 13,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_006"
+      ]
+    }
+  ]
+}

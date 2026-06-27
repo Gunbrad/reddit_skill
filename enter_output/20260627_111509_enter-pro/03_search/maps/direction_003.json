@@ -1,0 +1,175 @@
+{
+  "direction_id": "direction_003",
+  "query": "do AI website builders let you fully own and export your source code",
+  "generated_at": "2026-06-27T03:57:15.067887+00:00",
+  "source_post_ids": [
+    "1t1hob7",
+    "1r9gvz1",
+    "1ubvydv",
+    "1uee5ou",
+    "1ufylv2",
+    "1ugl9m4",
+    "1t3ego5",
+    "1uft8v1",
+    "1s7kz8l",
+    "1r9vpmj"
+  ],
+  "subreddit_distribution": [
+    {
+      "subreddit": "ai_website_builder",
+      "post_count": 1,
+      "percentage": 10.0,
+      "representative_post_titles": [
+        "Why do people still pay web developers when they can simply use AI website builders?"
+      ]
+    },
+    {
+      "subreddit": "antiai",
+      "post_count": 1,
+      "percentage": 10.0,
+      "representative_post_titles": [
+        "The hidden risks of using AI to build websites"
+      ]
+    },
+    {
+      "subreddit": "Businessowners",
+      "post_count": 1,
+      "percentage": 10.0,
+      "representative_post_titles": [
+        "A client built their own website using AI. Then called me to fix it. Here's what happened."
+      ]
+    },
+    {
+      "subreddit": "careerguidance",
+      "post_count": 1,
+      "percentage": 10.0,
+      "representative_post_titles": [
+        "I Built and Sold Websites With AI for a Year Without Really Knowing Code. Did I Build a Career or Fake One ?"
+      ]
+    },
+    {
+      "subreddit": "DigitalMarketing",
+      "post_count": 1,
+      "percentage": 10.0,
+      "representative_post_titles": [
+        "Clients keep asking if they need to rebuild their website for AI. Here's what I tell them."
+      ]
+    },
+    {
+      "subreddit": "freelancing",
+      "post_count": 1,
+      "percentage": 10.0,
+      "representative_post_titles": [
+        "I’m a 15 yr old about to be making thousands a month from website design with ai.. i need help"
+      ]
+    },
+    {
+      "subreddit": "SaaS",
+      "post_count": 1,
+      "percentage": 10.0,
+      "representative_post_titles": [
+        "Can I build a website with AI features without hiring a developer?"
+      ]
+    },
+    {
+      "subreddit": "SideProject",
+      "post_count": 1,
+      "percentage": 10.0,
+      "representative_post_titles": [
+        "I build websites with AI and sell them for 500 each"
+      ]
+    },
+    {
+      "subreddit": "smallbusiness",
+      "post_count": 1,
+      "percentage": 10.0,
+      "representative_post_titles": [
+        "I build websites with AI and sell them for 500 each"
+      ]
+    },
+    {
+      "subreddit": "vibecoding",
+      "post_count": 1,
+      "percentage": 10.0,
+      "representative_post_titles": [
+        "I built a web app for my job and now everyone knows"
+      ]
+    }
+  ],
+  "front_page_title_patterns": [
+    "第一人称实战叙事 + 反问或自我反思，例：'I Built and Sold Websites With AI for a Year... Did I Build a Career or Fake One?'",
+    "结果前置 + 具体数字钩子，例：'I build websites with AI and sell them for 500 each'",
+    "冲突叙事 + 求助/揭秘钩子，例：'A client built their own website using AI. Then called me to fix it...'",
+    "身份反差 + 收入预期钩子，例：'I'm a 15 yr old about to be making thousands a month from website design with ai'",
+    "行业从业者权威口吻，例：'Clients keep asking if they need to rebuild their website for AI. Here's what I tell them.'",
+    "挑衅/反问式标题引发争议，例：'Why do people still pay web developers when they can simply use AI website builders?'",
+    "隐藏风险/内幕叙事，例：'The hidden risks of using AI to build websites'"
+  ],
+  "common_title_structures": [
+    "[数字结果] + with AI + [变现/交付动作]",
+    "I [第一人称动作] + AI + for [具体价格/客户]",
+    "[冲突转折]：先做某事 → 然后 [意外后果]",
+    "Clients/People keep asking X → Here's what I tell them",
+    "Why do people still [传统行为] when [AI替代]?",
+    "I'm a [身份反差] about to [夸张结果].. i need help",
+    "The hidden [风险/真相] of using AI to [动作]"
+  ],
+  "content_forms": [
+    "纯文本帖（个人经历叙事+自我反思）",
+    "带链接纯文本帖（视频演示+操作流程拆解）",
+    "纯文本讨论帖（观点抛出+反问引导评论）",
+    "纯文本求助帖（列出困惑+开放问题）",
+    "纯文本troubleshooting帖（先建后修冲突叙事）",
+    "纯文本question thread（疑问句标题+评论区工具推荐）"
+  ],
+  "narrative_logic": [
+    "背景→行动→结果→困惑/反思 的四段式个人叙事，结尾用开放问题激活评论区",
+    "挑衅性观点抛出后，用具体场景（仪表盘缺后端、移动端渲染报错等）做论据",
+    "从业者先讲客户高频问题，再用'实际机制'做权威解释，制造反直觉洞察",
+    "真实案例先展示'看起来能用'的成功表象，再暴露技术缺陷，强化'真正可控 vs 表面可用'对比",
+    "身份或年龄反差制造共鸣，列出已知信息+具体困惑，诚恳求建议引发社区互助",
+    "用'感觉有点不真实'或'这有点bug'开头营造真实感，降低广告嫌疑",
+    "评论区工具对比与反驳观点被自然激活，常出现 Lovable / Bolt / Claude Code / Wix 等竞品提及"
+  ],
+  "high_frequency_semantic_phrases": [
+    "AI website builders",
+    "source code ownership",
+    "export source code",
+    "code ownership",
+    "AI generated code",
+    "no-code / low-code",
+    "Lovable",
+    "Bolt",
+    "Claude Code",
+    "Replit Agent",
+    "v0",
+    "Supabase",
+    "Stripe",
+    "Vercel",
+    "GitHub sync",
+    "post-demo infrastructure",
+    "platform lock-in",
+    "code handoff",
+    "production-ready",
+    "demo vs production"
+  ],
+  "reddit_search_occupancy_rules": [
+    "标题必须以第一人称经历或从业者视角开头，避免任何品牌名直接出现，否则会被判为广告",
+    "高搜索占有帖通常带具体数字（$500、15 yr old、a year）或具体后果（then called me to fix it）作为 hook",
+    "纯文本帖在源码所有权类查询里比带图帖更受信任，评论区工具推荐是真正的搜索占有战场",
+    "提问型标题（Can I... without...？）通过评论区工具列举占据长尾搜索词",
+    "冲突叙事（先建后修、先卖后忧）比纯赞美更易触发讨论，也更易被搜索算法识别为相关",
+    "评论区自然出现的 Lovable / Bolt / Claude Code / Wix 等竞品名是免费关键词占位窗口",
+    "避免在正文直接说 'fully own' 或 'export' 这类精确查询词，用'能不能真正掌控''敢不敢改代码'等口语化表达匹配真实搜索意图"
+  ],
+  "transferable_title_hooks": [
+    "我用 [AI工具] 建网站卖了 [X] 美元，结果 [意外发现]",
+    "[身份/年龄] + 即将用 AI 月入 [数字]，我需要 [具体帮助]",
+    "客户先用 AI 建站，然后找我修，发生了什么",
+    "为什么人们还在为 [传统服务] 付费，明明 [AI] 更快",
+    "客户一直问我 [常见问题]，这是我告诉他们的",
+    "我用 AI 给公司做了个 web app，现在所有人都知道了",
+    "AI 建站的隐藏风险，没人告诉你的几件事",
+    "做了一年 AI 建站，我不确定自己学到了真本事还是假本事"
+  ]
+}

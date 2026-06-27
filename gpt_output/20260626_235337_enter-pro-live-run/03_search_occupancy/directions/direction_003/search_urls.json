@@ -1,0 +1,152 @@
+{
+  "direction_id": "direction_003",
+  "query": "AI app builder code export developer handoff",
+  "status": "success",
+  "target_url_count": 10,
+  "raw_url_count": 10,
+  "unique_url_count": 10,
+  "search_results_url": "https://www.reddit.com/search/?q=AI+app+builder+code+export+developer+handoff&cId=10863d6d-5435-47c1-95a9-15507f3c176c&iId=6ba67791-a7bd-4c36-81e0-b9d3693e82da",
+  "error": null,
+  "items": [
+    {
+      "result_index": 1,
+      "post_url": "https://www.reddit.com/r/nocode/comments/1ucoiu6/can_ai_app_builders_really_create_a_full_app_if",
+      "post_id": "1ucoiu6",
+      "title": "can AI App builders really create a full app if you can't code",
+      "subreddit": "nocode",
+      "age_text": "4d ago",
+      "votes": 10,
+      "comments": 58,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_003"
+      ]
+    },
+    {
+      "result_index": 2,
+      "post_url": "https://www.reddit.com/r/EntrepreneurRideAlong/comments/1srjqqq/i_spent_18_months_building_four_apps_with_ai_code",
+      "post_id": "1srjqqq",
+      "title": "I spent 18 months building four apps with AI code tools and learned some expensive lessons.",
+      "subreddit": "EntrepreneurRideAlong",
+      "age_text": "2mo ago",
+      "votes": 10,
+      "comments": 29,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_003"
+      ]
+    },
+    {
+      "result_index": 3,
+      "post_url": "https://www.reddit.com/r/VibeCodeCamp/comments/1txyeb1/i_built_and_shipped_an_ios_app_with_zero_coding",
+      "post_id": "1txyeb1",
+      "title": "I built and shipped an iOS app with zero coding knowledge – using AI as my entire dev team",
+      "subreddit": "VibeCodeCamp",
+      "age_text": "21d ago",
+      "votes": 1,
+      "comments": 15,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_003"
+      ]
+    },
+    {
+      "result_index": 4,
+      "post_url": "https://www.reddit.com/r/appledevelopers/comments/1tlz0ja/best_ai_appbuilding_workflow_for_beginners",
+      "post_id": "1tlz0ja",
+      "title": "Best AI App-Building Workflow for Beginners?",
+      "subreddit": "appledevelopers",
+      "age_text": "1mo ago",
+      "votes": 7,
+      "comments": 25,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_003"
+      ]
+    },
+    {
+      "result_index": 5,
+      "post_url": "https://www.reddit.com/r/SideProject/comments/1txi6yq/i_built_and_shipped_an_ios_app_with_zero_coding",
+      "post_id": "1txi6yq",
+      "title": "I built and shipped an iOS app with zero coding knowledge – using AI as my entire dev team",
+      "subreddit": "SideProject",
+      "age_text": "21d ago",
+      "votes": 0,
+      "comments": 19,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_003"
+      ]
+    },
+    {
+      "result_index": 6,
+      "post_url": "https://www.reddit.com/r/nocode/comments/1rw8r7s/i_burned_700_and_3_months_testing_11_ai_app",
+      "post_id": "1rw8r7s",
+      "title": "I burned $700+ and 3 months testing 11 AI app builders. Here's my final list.",
+      "subreddit": "nocode",
+      "age_text": "3mo ago",
+      "votes": 20,
+      "comments": 50,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_003"
+      ]
+    },
+    {
+      "result_index": 7,
+      "post_url": "https://www.reddit.com/r/webdev/comments/1rgt074/the_handoff_between_no_code_builders_and",
+      "post_id": "1rgt074",
+      "title": "The handoff between no code builders and developers is completely broken",
+      "subreddit": "webdev",
+      "age_text": "4mo ago",
+      "votes": 104,
+      "comments": 85,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_003"
+      ]
+    },
+    {
+      "result_index": 8,
+      "post_url": "https://www.reddit.com/r/directorymakers/comments/1syj47m/a_new_directory_nocode_ai_app_builders",
+      "post_id": "1syj47m",
+      "title": "A new directory: No-code / AI App Builders",
+      "subreddit": "directorymakers",
+      "age_text": "2mo ago",
+      "votes": 6,
+      "comments": 19,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_003"
+      ]
+    },
+    {
+      "result_index": 9,
+      "post_url": "https://www.reddit.com/r/cybersecurity/comments/1rsav4a/ai_code_generation_has_made_my_appsec_workload",
+      "post_id": "1rsav4a",
+      "title": "AI code generation has made my AppSec workload unmanageable. Here’s how I’m attempting to manage it.",
+      "subreddit": "cybersecurity",
+      "age_text": "4mo ago",
+      "votes": 83,
+      "comments": 50,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_003"
+      ]
+    },
+    {
+      "result_index": 10,
+      "post_url": "https://www.reddit.com/r/vibecoding/comments/1udl3kx/got_stuck_building_your_app_with_ai_ama",
+      "post_id": "1udl3kx",
+      "title": "Got stuck building your app with AI? AMA",
+      "subreddit": "vibecoding",
+      "age_text": "3d ago",
+      "votes": 0,
+      "comments": 7,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_003"
+      ]
+    }
+  ]
+}

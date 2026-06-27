@@ -1,0 +1,152 @@
+{
+  "direction_id": "direction_004",
+  "query": "how to hand off an AI generated codebase to a developer without rewriting everything",
+  "status": "success",
+  "target_url_count": 10,
+  "raw_url_count": 10,
+  "unique_url_count": 10,
+  "search_results_url": "https://www.reddit.com/search/?q=how+to+hand+off+an+AI+generated+codebase+to+a+developer+without+rewriting+everything&cId=dfb1099b-51f9-47e5-9298-ba21297400d2&iId=827d04cd-5c2a-4858-ae4e-f7de4a06a232",
+  "error": null,
+  "items": [
+    {
+      "result_index": 1,
+      "post_url": "https://www.reddit.com/r/learnprogramming/comments/1ucv52n/i_cant_code_without_ai",
+      "post_id": "1ucv52n",
+      "title": "I can't code without AI",
+      "subreddit": "learnprogramming",
+      "age_text": "4d ago",
+      "votes": 169,
+      "comments": 107,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_004"
+      ]
+    },
+    {
+      "result_index": 2,
+      "post_url": "https://www.reddit.com/r/AIcodingProfessionals/comments/1u8bm00/how_to_deal_with_ai_codebase",
+      "post_id": "1u8bm00",
+      "title": "How to deal with AI codebase ?",
+      "subreddit": "AIcodingProfessionals",
+      "age_text": "10d ago",
+      "votes": 7,
+      "comments": 37,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_004"
+      ]
+    },
+    {
+      "result_index": 3,
+      "post_url": "https://www.reddit.com/r/ChatGPT/comments/1sbuyeg/i_mass_deleted_3_months_of_ai_generated_code_last",
+      "post_id": "1sbuyeg",
+      "title": "I mass deleted 3 months of AI generated code last week. Here is what I learned.",
+      "subreddit": "ChatGPT",
+      "age_text": "3mo ago",
+      "votes": 1263,
+      "comments": 212,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_004"
+      ]
+    },
+    {
+      "result_index": 4,
+      "post_url": "https://www.reddit.com/r/leetcode/comments/1ueyeuu/folks_cheating_using_al_as_an_interviewer_1_and",
+      "post_id": "1ueyeuu",
+      "title": "Folks cheating using Al, as an interviewer, 1 (and many others) know you're doing it and I really don't want to spend more time with you than I do with my girlfriend",
+      "subreddit": "leetcode",
+      "age_text": "2d ago",
+      "votes": 380,
+      "comments": 145,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_004"
+      ]
+    },
+    {
+      "result_index": 5,
+      "post_url": "https://www.reddit.com/r/cscareerquestions/comments/1uejall/co_intern_got_yelled_at_for_deleting_a_prod",
+      "post_id": "1uejall",
+      "title": "Co intern got yelled at for deleting a prod database. Is this a red flag?",
+      "subreddit": "cscareerquestions",
+      "age_text": "2d ago",
+      "votes": 491,
+      "comments": 113,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_004"
+      ]
+    },
+    {
+      "result_index": 6,
+      "post_url": "https://www.reddit.com/r/vibecoding/comments/1ucm7o4/if_ai_has_ruined_software_development_why_am_i",
+      "post_id": "1ucm7o4",
+      "title": "If AI has ruined software development, why am I coding in the sun with a pint and having a lovely time?",
+      "subreddit": "vibecoding",
+      "age_text": "5d ago",
+      "votes": 371,
+      "comments": 104,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_004"
+      ]
+    },
+    {
+      "result_index": 7,
+      "post_url": "https://www.reddit.com/r/cscareerquestions/comments/1ucv7uu/i_cant_code_without_ai",
+      "post_id": "1ucv7uu",
+      "title": "I can't code without AI",
+      "subreddit": "cscareerquestions",
+      "age_text": "4d ago",
+      "votes": 0,
+      "comments": 29,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_004"
+      ]
+    },
+    {
+      "result_index": 8,
+      "post_url": "https://www.reddit.com/r/gamedev/comments/1sm28xl/how_do_you_deal_with_developers_who_rely_too",
+      "post_id": "1sm28xl",
+      "title": "How do you deal with developers who rely too heavily on AI-generated code?",
+      "subreddit": "gamedev",
+      "age_text": "2mo ago",
+      "votes": 391,
+      "comments": 265,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_004"
+      ]
+    },
+    {
+      "result_index": 9,
+      "post_url": "https://www.reddit.com/r/LocalLLaMA/comments/1sjbvm7/how_do_you_stop_codebase_from_degenerating_into",
+      "post_id": "1sjbvm7",
+      "title": "How do you stop codebase from degenerating into an un-maintainable AI-slop mess?",
+      "subreddit": "LocalLLaMA",
+      "age_text": "3mo ago",
+      "votes": 24,
+      "comments": 81,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_004"
+      ]
+    },
+    {
+      "result_index": 10,
+      "post_url": "https://www.reddit.com/r/webdev/comments/1tnzyp5/how_do_you_protect_your_codebase_from_ai_slop",
+      "post_id": "1tnzyp5",
+      "title": "How do you protect your codebase from AI slop?",
+      "subreddit": "webdev",
+      "age_text": "1mo ago",
+      "votes": 0,
+      "comments": 60,
+      "duplicate_of_direction": null,
+      "matched_directions": [
+        "direction_004"
+      ]
+    }
+  ]
+}

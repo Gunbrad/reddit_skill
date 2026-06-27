@@ -1,0 +1,35 @@
+{
+  "project_name": "Enter Pro",
+  "project_id": "enter-pro",
+  "notes": "Stage-3 live run via skill script. New long-tail queries (distinct from the 2026-06-26 baseline run).",
+  "posts_per_query": 10,
+  "search_directions": [
+    {
+      "direction_id": "direction_001",
+      "query": "how to add real auth and database after AI generated my app"
+    },
+    {
+      "direction_id": "direction_002",
+      "query": "AI built saas stripe subscription webhook not firing for real users"
+    },
+    {
+      "direction_id": "direction_003",
+      "query": "exporting code from AI app builder to avoid platform lock in"
+    },
+    {
+      "direction_id": "direction_004",
+      "query": "non technical founder shipping AI app to production checklist"
+    },
+    {
+      "direction_id": "direction_005",
+      "query": "keeping AI generated app maintainable after the demo phase"
+    },
+    {
+      "direction_id": "direction_006",
+      "query": "AI app builder with built in backend auth payments for solo founder"
+    }
+  ],
+  "topic_card_count": 12,
+  "topic_supplemental_context": "优先产出面向 Reddit 搜索占位的自然提问/复盘型选题，不要硬广；覆盖 demo-to-production、auth/payment/database、code ownership 等语义。",
+  "chosen_direction_ids": []
+}
