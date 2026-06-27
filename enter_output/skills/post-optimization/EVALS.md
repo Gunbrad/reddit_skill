@@ -91,6 +91,17 @@ The five sub-systems: (A) de-AI/native Title+Body, (B) comment-section nativenes
 
 ---
 
+## F. Feishu deliverables
+
+| # | Criterion | Blocking | Pass condition |
+|---|-----------|:---:|----------------|
+| F1 | 选题 doc exists | ✅ | `02_topics/feishu_links.md` contains the 选题 Feishu URL; if stage 2 deferred it, stage 6 created it from `02_topics/topics.md` |
+| F2 | 帖子 doc exists | ✅ | `06_optimized/feishu_links.md` contains the 帖子 Feishu URL |
+| F3 | 生图 doc handled conditionally | ✅ | If images/prompts exist, the 生图 doc URL is recorded; if no images, `feishu_links.md` explicitly says no image doc was created |
+| F4 | Expected doc count met | ✅ | The run has 2 Feishu docs when no images, or 3 when images exist; never only the 帖子 doc |
+
+---
+
 ## Failure → action
 
 - Any A/B/C/D blocking fail → rewrite that post and re-score; do NOT write to Feishu.
@@ -102,6 +113,8 @@ The five sub-systems: (A) de-AI/native Title+Body, (B) comment-section nativenes
 - E6 fail → re-score against IMAGE_PROMPT_EVALS.md; rewrite prompt or repair via image2 edits.
 - E7/E8 fail → build/repair the 生图 doc and re-verify each combo→post anchor before handoff.
 - E9 fail → strip the secret immediately; secrets stay in env only.
+- F1-F4 fail → create/repair the missing Feishu doc link(s), set public-edit permission, and
+  update `feishu_links.md` / `run_manifest.md` before marking the run complete.
 - Record per-post sub-system scores in `run_manifest.md`.
 
 ## Reviewer prompt (optional subagent — run this BLIND, without telling it the product is the client's)

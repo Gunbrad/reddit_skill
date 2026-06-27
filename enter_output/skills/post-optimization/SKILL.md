@@ -24,6 +24,8 @@ question, a little doubt, no checklist structure, brand mentioned like an accide
 
 - `05_optimized_cards/drafts_md/*.md`, `05_optimized_cards/optimization.md`.
 - `01_product_brief/product_brief.md` (the fact + boundary source of truth).
+- `02_topics/topics.md` and `02_topics/feishu_links.md` (final deliverable check; if the
+  选题 Feishu doc was deferred, create it from `topics.md` before completing this stage).
 - image2 API spec (client will provide; see "Images" — treat as pluggable).
 
 ## Tasks (all required per post)
@@ -135,6 +137,8 @@ Write to `06_optimized/` (UTF-8):
 - `images/image_feishu.md` — image-doc URL + `post_id → title block_id` anchor mapping
   (only when images exist).
 - `feishu_links.md` — the created Feishu doc URL(s): the 帖子 doc, and the 生图 doc if images exist.
+  Also confirm the 选题 doc URL exists in `02_topics/feishu_links.md`; if missing, create it
+  from `02_topics/topics.md` before marking the run complete.
 
 Then create a Feishu doc (`lark-doc`) titled `{Product} - 帖子 - {date}`, paste the posts. In
 each post's `<h2>Title</h2>` block write the main title `<p>`, then `<p>备用标题：</p>` and one
@@ -145,14 +149,16 @@ with the link can edit" via lark-drive — do this directly without asking the u
 
 ## Process
 
-1. Read drafts + brief. For each post: de-AI rewrite (main title + ≥3 备用标题 + body) →
+1. Verify the 选题 Feishu doc exists in `02_topics/feishu_links.md`. If it was deferred,
+   create it from `02_topics/topics.md`, set public-edit permission, and log the URL.
+2. Read drafts + brief. For each post: de-AI rewrite (main title + ≥3 备用标题 + body) →
    run the de-AI EVALS → revise to pass.
-2. Fact-check against the brief; fix overclaims/unverified statements.
-3. For each image: classify 实体/虚拟 → repair scenario → write prompt → score against
+3. Fact-check against the brief; fix overclaims/unverified statements.
+4. For each image: classify 实体/虚拟 → repair scenario → write prompt → score against
    `IMAGE_PROMPT_EVALS.md` → call image2 → re-check output → save png + prompt record.
-4. Pick ≥3 subreddits per post in the required format.
-5. Run full EVALS. Revise until blocking passes.
-6. Write `final_posts.md`; create the 帖子 Feishu doc (main title + ≥3 备用标题 + Target
+5. Pick ≥3 subreddits per post in the required format.
+6. Run full EVALS. Revise until blocking passes.
+7. Write `final_posts.md`; create the 帖子 Feishu doc (main title + ≥3 备用标题 + Target
    Subreddit line per post) and set it public-editable. If images exist, create the 生图 doc
    with prompt+image combos and anchor links back to each post (Task 3b), also public-editable;
    record links + anchor mapping. Log manifest. Hand off to `feishu-formatting`.
@@ -165,6 +171,7 @@ with the link can edit" via lark-drive — do this directly without asking the u
 - Image with AI tells: warped hands, garbled UI text, plastic CGI sheen, fake futuristic UI,
   watermark — must pass `IMAGE_PROMPT_EVALS.md` before use.
 - Image-doc anchor wired to the wrong post (combo↔post_id mismatch).
+- Completing stage 6 with only the 帖子 doc and no recorded 选题 doc.
 - Writing any API key / secret into prompts.md, image_feishu.md, the image doc, or manifest.
 - Stating an unverified feature as fact.
 - Fewer than 3 subreddits or wrong format.

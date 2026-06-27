@@ -56,7 +56,9 @@ number the user wants; if unspecified, propose a set and confirm. Group them und
 
 Use the `lark-doc` skill to create a new Feishu doc titled `{Product} - 选题 - {date}` and
 write the 选题 content into it. Record the doc URL in `02_topics/feishu_links.md` and in
-`run_manifest.md`. (See conventions.md for Feishu rules — block-level, never overclaim.)
+`run_manifest.md`. This is part of stage completion: do not mark stage 2 done or hand off with
+the 选题 Feishu doc merely "deferred". (See conventions.md for Feishu rules — block-level,
+never overclaim.)
 
 ## Process
 

@@ -1,6 +1,7 @@
 # EVALS — Topic Selection (Stage 2)
 
-Score `topics.md` before creating the Feishu doc / handing off. **Blocking** must all pass.
+Score `topics.md` before handoff. First score content before creating the Feishu doc, then
+verify the Feishu doc link exists. **Blocking** must all pass.
 Threshold: all blocking pass AND total ≥ 80/100. Score the SET, then each 选题.
 
 ## Set-level rubric
@@ -10,6 +11,7 @@ Threshold: all blocking pass AND total ≥ 80/100. Score the SET, then each 选�
 | S1 | Directions are mutually distinct | ✅ | 15 | No two 选题 would produce near-identical search queries; grouped under distinct 主线 |
 | S2 | Coverage of key personas/pains | ⬜ | 10 | Spread across the brief's priority personas, not all on one pain |
 | S3 | Count sufficient for stage 3 | ⬜ | 5 | Enough 选题 to yield the planned directions (each → 2 queries) |
+| S4 | 选题 Feishu doc created | ✅ | 0 | `02_topics/feishu_links.md` contains the 选题 doc URL; not merely "deferred" |
 
 ## Per-选题 rubric (every 选题 must pass blocking)
 
@@ -25,6 +27,8 @@ Threshold: all blocking pass AND total ≥ 80/100. Score the SET, then each 选�
 ## Failure → action
 
 - S1 fail → merge/replace overlapping 选题 before stage 3 (else duplicate directions).
+- S4 fail → create the 选题 Feishu doc from `topics.md`, set public-edit permission, and record
+  the URL before handoff.
 - Per-选题 blocking fail → rewrite that 选题; do not write it to Feishu.
 - Record set-level + per-选题 verdicts in `run_manifest.md`.
 

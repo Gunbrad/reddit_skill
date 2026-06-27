@@ -1,6 +1,6 @@
 ---
 name: topic-card-selection
-description: Use after Topic Cards are generated, when screening every topic card with a binary pass/fail gate to keep only the cards that are community-compliant, production-ready, and low-risk. Stage 4 of the Reddit posting pipeline. Does NOT pick a top-N or write drafts — that is stage 5 (topic-card-optimization).
+description: Use after Topic Cards are generated, when screening every topic card with a binary pass/fail gate to keep only the cards that are community-compliant, product-relevant, production-ready, and low-risk. Stage 4 of the Reddit posting pipeline. Does NOT pick a top-N or write drafts — that is stage 5 (topic-card-optimization).
 ---
 
 # Topic Card Screening (binary gate) (Stage 4)
@@ -9,8 +9,8 @@ description: Use after Topic Cards are generated, when screening every topic car
 
 Screen **every** generated Topic Card with a **binary pass/fail gate**. The only question
 here is: *can this card safely enter the production pipeline?* — i.e. is it
-community-compliant, writable into a real post, and low brand-risk. Every card that passes
-moves on to stage 5; failing cards are dropped with a recorded reason.
+community-compliant, product-relevant, writable into a real post, and low brand-risk.
+Every card that passes moves on to stage 5; failing cards are dropped with a recorded reason.
 
 **Core principle:** this stage is a SAFETY/READINESS filter, not a quality ranking. Do NOT
 rank, do NOT pick a top-N, do NOT write supplemental notes or drafts here — that is stage 5
@@ -39,7 +39,11 @@ A card **PASSES** only if ALL of these hold; otherwise it FAILS:
 2. **Production-ready** — required fields are complete and coherent (title_direction,
    content_form, post_format, expression_mechanism, brand_exposure_method, target_subreddit);
    it describes a writable post with a real, identifiable user pain (not a vague stub).
-3. **Low risk** — does not require an unverified / "不可说" feature from the brief; does not
+3. **Product-relevant** — the card's user pain, subreddit, and planned brand exposure trace
+   to the current product brief: a priority persona/pain, a verified capability, or a stated
+   differentiation. A generally interesting Reddit topic FAILS if it cannot lead to a
+   truthful, natural mention of this product.
+4. **Low risk** — does not require an unverified / "不可说" feature from the brief; does not
    read as a pure ad / feature dump; no red-line violation; brand exposure is at most a
    natural mention.
 
@@ -61,7 +65,7 @@ Write to `04_screen/` (UTF-8):
 
 ## Process
 
-1. Load ALL cards + maps + brief. For each card, apply the 3-part binary gate.
+1. Load ALL cards + maps + brief. For each card, apply the 4-part binary gate.
 2. Record verdict + reason per card in `screening.md`; collect the passing topic_ids.
 3. Run EVALS (screening completeness + correctness). Fix any mis-judgment.
 4. Log manifest. Hand off the passing set to `topic-card-optimization`.
@@ -71,5 +75,7 @@ Write to `04_screen/` (UTF-8):
 - Ranking or picking a top-N here (that's stage 5).
 - Writing supplemental notes or firing the draft job here (that's stage 5).
 - Passing a card that needs an unverified feature or fabricated data.
+- Passing a card that is safe in general but not connected to the current product's personas,
+  pains, verified capabilities, or differentiation.
 - Failing a card just for being "average" — average-but-safe still PASSES (stage 5 ranks).
 - Forcing the count to 36 — the total is whatever stage 3 generated.

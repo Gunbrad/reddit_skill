@@ -129,6 +129,22 @@ If none was given, ask. Do NOT scatter artifacts outside the run folder.
 Write/append `run_manifest.md` after every stage with: stage name, timestamp, output
 paths, and the EVALS pass/fail verdict. This is how a later session resumes mid-pipeline.
 
+## Final Feishu deliverables (MANDATORY)
+
+Before marking a run complete, verify the user-facing Feishu docs:
+
+1. **选题 doc** — always required. `02_topics/feishu_links.md` must contain the Feishu URL
+   for `{Product} - 选题 - {date}`.
+2. **帖子 doc** — always required. `06_optimized/feishu_links.md` must contain the Feishu URL
+   for `{Product} - 帖子 - {date}`.
+3. **生图提示词+图片 doc** — required only when any post has an image or pending image prompt.
+   If no images are used, record that explicitly in `06_optimized/feishu_links.md`.
+
+A completed run therefore produces **2 Feishu docs when there are no images, or 3 Feishu docs
+when images exist**. Do not finish with only the 帖子 doc. If the 选题 doc was deferred during
+stage 2, create it from `02_topics/topics.md`, set public-edit permission, and record the URL
+before stage 7/done.
+
 ## Handoff contract (what each stage MUST guarantee)
 
 A stage may hand off ONLY when its artifact:

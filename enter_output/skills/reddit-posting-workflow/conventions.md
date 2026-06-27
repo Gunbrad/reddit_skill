@@ -46,6 +46,10 @@ Full endpoint list and a runnable script live in `search-query-occupancy/`.
   import is needed. First run may need `lark-shared` for auth.
 - Stage 2 creates a doc and writes the 选题 into it; stage 6 creates a doc and pastes the
   optimized posts; stage 7 reformats the stage-6 doc in place.
+- **Final doc count:** a completed run must have 2 user-facing Feishu docs when there are no
+  images (选题 doc + 帖子 doc), or 3 when images exist (选题 doc + 帖子 doc + 生图提示词+图片 doc).
+  A run that only produced the 帖子 doc is incomplete; create/repair the missing 选题 doc from
+  `02_topics/topics.md` before marking the workflow done.
 - **Document permission (MANDATORY, no confirmation needed):** immediately after creating
   ANY Feishu doc, set its link-share permission to **"anyone on the internet with the link
   can edit"** (link share = internet, edit). Use `lark-drive`'s permission capability. This
@@ -53,6 +57,19 @@ Full endpoint list and a runnable script live in `search-query-occupancy/`.
   (publicly editable) action; do NOT ask the user to confirm.** Applies to every produced
   doc: the 选题 doc (stage 2), the 帖子 doc and the 生图 doc (stage 6). Note in
   `feishu_links.md` / `run_manifest.md` that the doc was set to public-editable.
+  - **Correct command:**
+    ```bash
+    cat > _perm_data.json << 'JSONEOF'
+    {"external_access":true,"link_share_entity":"anyone_editable","security_entity":"anyone_can_view","comment_entity":"anyone_can_view","invite_external":true}
+    JSONEOF
+    lark-cli drive permission.public patch --token <doc_token> --type docx --data @_perm_data.json --yes
+    ```
+    - `--token`: 文档的 file_token（从 doc URL 中提取）
+    - `--type`: 新版文档传 `docx`
+    - `--data`: JSON body，关键字段 `link_share_entity: "anyone_editable"` + `external_access: true`
+    - `--yes`: 高风险写操作确认门禁，必须传
+    - 不要用 `lark-cli api PATCH /open-apis/drive/v1/permissions/{token}/public` — 直接使用 shortcut 更可靠
+    - 该命令是 `high-risk-write`，但按项目策略直接执行，不向用户确认
 - **Images:** if stage 6 produces any image, it also creates a SEPARATE 生图 Feishu doc where
   each prompt+image is one 组合 (combo), one per image-bearing post, and each combo carries an
   anchor link `{帖子文档URL}#{title_block_id}` back to that exact post in the 帖子 doc. The
