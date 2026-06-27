@@ -29,6 +29,9 @@ Not for: rewriting posts, choosing topics — those are later stages.
 - Official site + any client-provided docs/screenshots.
 - Existing client fact-correction or feedback notes, if any.
 - The run folder from the orchestrator (create it now if entering here).
+- `run_config.json` if present. **Skip this stage** when the user supplied a brief
+  (`1 in skip_stages` / `provided_artifacts.product_brief`): normalize their material into
+  the structure below, run EVALS on it, and proceed — do not regenerate from scratch.
 
 ## Required output structure
 

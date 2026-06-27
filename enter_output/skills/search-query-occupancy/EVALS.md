@@ -1,6 +1,6 @@
 # EVALS — Search Queries + Directions + Topic Cards (Stage 3)
 
-Three sub-gates: (A) queries before running the API, (B) chosen directions after maps,
+Three sub-gates: (A) queries before running the API, (B) directions after maps,
 (C) Topic Cards after generation. **Blocking** must pass at each gate.
 
 ## Gate A — Query quality (before API run). Threshold: all blocking pass.
@@ -8,43 +8,41 @@ Three sub-gates: (A) queries before running the API, (B) chosen directions after
 | # | Criterion | Blocking | Pass condition |
 |---|-----------|:---:|----------------|
 | A1 | Long-tail, not broad | ✅ | Each query is a multi-word intent phrase mapping to a real scenario/pain; reject single broad keywords ("AI app builder") |
-| A2 | 2 queries per 选题 | ✅ | Each 选题 yields exactly 2 queries with distinct angles |
-| A3 | Derived from 选题, not invented | ✅ | Each query traces to a 选题's pain/narrative; no off-topic queries |
-| A4 | Semantic alignment | ⬜ | Query words match how a real user would search at that stage |
-| A5 | 长尾理由 recorded | ⬜ | search_queries.md notes why each query is long-tail |
+| A2 | Candidates then one chosen | ✅ | Each 选题 lists `queries_per_topic` (default 3) distinct candidates and marks exactly ONE chosen query |
+| A3 | One direction per 选题 | ✅ | top `topic_count` 选题 (default 6) → ≤6 directions, each uniquely tied to a 选题 (recorded in topic_to_direction) |
+| A4 | Derived from 选题, not invented | ✅ | Each query traces to its 选题's pain/narrative; no off-topic queries |
+| A5 | Chosen beats the rest | ⬜ | search_queries.md notes why the chosen candidate wins on search-occupancy intent |
+| A6 | 长尾理由 recorded | ⬜ | search_queries.md notes why each chosen query is long-tail |
 
-## Gate B — Direction selection (after maps). Threshold: all blocking pass.
+## Gate B — Direction sanity (after maps). Threshold: all blocking pass.
 
 | # | Criterion | Blocking | Pass condition |
 |---|-----------|:---:|----------------|
-| B1 | Only success directions | ✅ | Chosen directions have `status: success` and `map_md/map_json: true` (NOT just run succeeded) |
-| B2 | Exactly 3, mutually exclusive | ✅ | 3 directions whose maps cover non-overlapping subreddits/title-patterns/semantics |
-| B3 | Coverage breadth | ⬜ | The 3 together span distinct pains, not 3 flavors of one |
-| B4 | Map quality usable | ⬜ | Each chosen map has a populated 社区分布 + 标题规律 (not empty/degenerate) |
-
-Mutual-exclusivity check: compare each pair's `subreddit_distribution`,
-`common_title_structures`, and `high_frequency_semantic_phrases`. If two directions share
-most subreddits AND title structures, they overlap → pick a different pair.
+| B1 | Only success directions proceed | ✅ | Cards generated only for directions with `status: success` and `map_md/map_json: true` |
+| B2 | No 选题 silently dropped | ✅ | Every top-`topic_count` 选题 has a successful direction, or its direction was re-run/replaced (logged) |
+| B3 | Map quality usable | ⬜ | Each map has a populated 社区分布 + 标题规律 (not empty/degenerate) |
+| B4 | Coverage breadth | ⬜ | The directions span distinct pains (a natural result of distinct 选题) |
 
 ## Gate C — Topic Cards (after generation). Threshold: all blocking pass.
 
 | # | Criterion | Blocking | Pass condition |
 |---|-----------|:---:|----------------|
-| C1 | 12 cards per chosen direction | ✅ | 36 total across 3 directions |
+| C1 | Card count matches config | ✅ | `run_config.topic_card_count` cards per successful direction (default 12); no fixed total — depends on direction count |
 | C2 | Each card has required fields | ✅ | title_direction, content_form, post_format, expression_mechanism, brand_exposure_method, target_subreddit present |
 | C3 | Brand exposure not an ad | ⬜ | brand_exposure_method surfaces product naturally, tied to a verified capability |
-| C4 | Cards within a direction are varied | ⬜ | Not 12 near-duplicates; varied content forms / angles |
+| C4 | Cards within a direction are varied | ⬜ | Not near-duplicates; varied content forms / angles |
 
 ## Failure → action
 
-- Gate A fail → rewrite queries before calling the API (saves a 10-min run).
-- Gate B fail → re-pick from success directions; if <3 succeeded, re-run weak directions.
+- Gate A fail → rewrite/re-pick queries before calling the API (saves a 10-min run).
+- Gate B fail → re-run or replace any direction whose map failed; don't drop its 选题.
 - Gate C fail → regenerate cards (overwrite:true) with a sharper supplemental_context.
 - Record all three gate verdicts + run_id in `run_meta.json`/`run_manifest.md`.
 
 ## Reviewer prompt (optional subagent)
 
-"Read search_queries.md and the 3 chosen maps. (A) Is each query genuinely long-tail
-intent, not a broad keyword? (B) Do any two chosen directions share most subreddits AND
-title structures (i.e. they overlap)? (C) Are there 12 varied cards per direction with all
-required fields and non-ad brand exposure? List every violation."
+"Read search_queries.md and the maps. (A) Does each 选题 list 3 candidate queries and pick the
+best one, each genuinely long-tail intent (not a broad keyword), with ≤6 directions one per
+选题? (B) Did any 选题 get silently dropped because its direction failed? (C) Are there
+`topic_card_count` varied cards per direction with all required fields and non-ad brand
+exposure? List every violation."

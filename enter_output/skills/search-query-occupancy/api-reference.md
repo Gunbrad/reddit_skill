@@ -77,9 +77,9 @@ Topic card fields: topic_id, title_direction, content_form, post_format,
 expression_mechanism, brand_exposure_method, needs_extra_material, required_material,
 reference_logic, source_card_ids, target_subreddit, status.
 
-Selecting cards has NO save endpoint — pass chosen topic_ids to the draft job (stage 4).
+Selecting cards has NO save endpoint — pass chosen topic_ids to the draft job (stage 5).
 
-## 5. Drafts (stage 4 uses these)
+## 5. Drafts (stage 5 uses these)
 ```
 GET  .../directions/{did}/drafts
 POST .../directions/{did}/drafts/jobs

@@ -27,6 +27,10 @@ Not for: writing search queries (stage 3) or actual posts (stages 4-5).
 
 - `01_product_brief/product_brief.md` (capability boundary, personas, differentiation, red lines).
 - Run folder from orchestrator.
+- `run_config.json` if present. **Skip auto-generation** when the user specified 选题
+  (`run_config.topics` non-empty, or `2 in skip_stages` / `provided_artifacts.topics`):
+  normalize them into the block format below and run EVALS — don't invent new ones. If
+  auto-generating, use `run_config.topic_count` for how many to produce (else propose & confirm).
 
 ## Required output structure
 
@@ -44,9 +48,9 @@ N. {选题标题 / 一句话方向}
 选择理由：{why this direction has search/purchase intent and low platform risk}
 ```
 
-Produce enough 选题 to feed stage 3 (typically the count the user wants; if unspecified,
-propose a set and confirm). Group them under 主线 (strategic threads) so directions don't
-overlap.
+Produce enough 选题 to feed stage 3. Count = `run_config.topic_count` if set, else the
+number the user wants; if unspecified, propose a set and confirm. Group them under 主线
+(strategic threads) so directions don't overlap.
 
 ## After writing locally: write to Feishu
 

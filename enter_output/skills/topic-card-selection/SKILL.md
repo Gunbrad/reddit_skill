@@ -1,95 +1,75 @@
 ---
 name: topic-card-selection
-description: Use after Topic Cards are generated, when scoring and ranking topic cards to pick the best ones to write, when adding supplemental notes or client feedback to selected cards, or when triggering the draft-generation job for chosen topics. Stage 4 of the Reddit posting pipeline.
+description: Use after Topic Cards are generated, when screening every topic card with a binary pass/fail gate to keep only the cards that are community-compliant, production-ready, and low-risk. Stage 4 of the Reddit posting pipeline. Does NOT pick a top-N or write drafts — that is stage 5 (topic-card-optimization).
 ---
 
-# Topic Card Selection + Drafting (Stage 4)
+# Topic Card Screening (binary gate) (Stage 4)
 
 ## Overview
 
-From the 36 Topic Cards (3 directions × 12), score and rank them, pick the best top-N, write
-a supplemental note / client feedback for each chosen card (every card has gaps), then fire
-the draft-generation job. Output is a selection record + generated drafts for stage 5.
+Screen **every** generated Topic Card with a **binary pass/fail gate**. The only question
+here is: *can this card safely enter the production pipeline?* — i.e. is it
+community-compliant, writable into a real post, and low brand-risk. Every card that passes
+moves on to stage 5; failing cards are dropped with a recorded reason.
 
-**Core principle:** selection is *scored*, not vibes. The supplemental note is where you fix
-each card's specific weakness before it becomes a post — it is not optional filler.
+**Core principle:** this stage is a SAFETY/READINESS filter, not a quality ranking. Do NOT
+rank, do NOT pick a top-N, do NOT write supplemental notes or drafts here — that is stage 5
+(`topic-card-optimization`). Keep the bar at "production-safe", and let stage 5 find the
+viral winners among the passers.
 
 ## When to use
 
 - `03_search/topic_cards/*.md` exist and passed stage-3 EVALS (Gate C).
-- You need to choose which cards to draft and generate the drafts.
+- You need to filter the full card set down to the production-safe subset.
 
-Not for: optimizing finished posts (stage 5).
+Not for: viral-potential ranking, supplemental notes, or drafting (stage 5).
 
 ## Inputs
 
-- `03_search/topic_cards/{direction_id}.json` (36 cards), the occupancy maps, `run_meta.json`.
-- `01_product_brief/product_brief.md` (to score brand-fit and respect boundaries).
+- `03_search/topic_cards/{direction_id}.json` (ALL generated cards), the occupancy maps, `run_meta.json`.
+- `01_product_brief/product_brief.md` (capability boundary, red lines).
+- `run_config.json` (no count knobs apply here — the gate judges every card; total is whatever stage 3 produced, not forced to 36).
 
-## Scoring rubric (pick top-N by weighted score)
+## The binary gate (judge EVERY card pass/fail)
 
-Score each of the 36 cards 1-5 per dimension; weighted total ranks them. Default N agreed
-with the user (the pipeline default narrative is "top-N of 36").
+A card **PASSES** only if ALL of these hold; otherwise it FAILS:
 
-| Dimension | Weight | 5 = high | 1 = low |
-|-----------|:---:|----------|---------|
-| Search-occupancy fit | 25% | Title direction matches the map's high-rank title patterns/semantics | Generic, won't rank |
-| Pain authenticity | 20% | Opens from a real, relatable pain | Product-first / contrived |
-| Brand-fit & safety | 20% | Brand surfaces naturally on a verified capability; low red-line risk | Ad-like or claims unverified feature |
-| Subreddit viability | 15% | target_subreddit allows advice/experience posts, >10k, low filter risk | Hostile to brand/self-promo |
-| Discussion potential | 10% | Invites comments (question/debate hooks) | Flat, no hook |
-| Distinctiveness | 10% | Different from already-picked cards | Duplicate angle/subreddit |
+1. **Community-compliant** — its `target_subreddit` allows this kind of advice/experience
+   post; not a community hostile to the topic or to any self-promo.
+2. **Production-ready** — required fields are complete and coherent (title_direction,
+   content_form, post_format, expression_mechanism, brand_exposure_method, target_subreddit);
+   it describes a writable post with a real, identifiable user pain (not a vague stub).
+3. **Low risk** — does not require an unverified / "不可说" feature from the brief; does not
+   read as a pure ad / feature dump; no red-line violation; brand exposure is at most a
+   natural mention.
 
-Compute weighted score per card; rank; pick top-N while keeping **diversity** (avoid
-multiple picks with the same subreddit + same angle). Record scores in `selection.md`.
-
-## Supplemental note (per chosen card) — required
-
-Every chosen card gets a `supplemental_context` written to fix its weakness. Decide what to
-write by checking, in order:
-
-1. `needs_extra_material` true? → state what client material is required; instruct the draft
-   to mark placeholders, not fabricate.
-2. Brand exposure too strong/weak? → tell the draft to soften to ≤1-2 capabilities, disclose.
-3. Lowest-scoring dimension above → give a targeted instruction to raise it.
-4. Subreddit risk? → tell the draft to fit that community's norms (less promo, more question).
-
-Keep each note concrete and short — it goes verbatim into the API's
-`topic_supplemental_contexts[topic_id]`.
-
-## Draft generation (API)
-
-Use the draft endpoints (see search-query-occupancy/api-reference.md §5), per direction:
-```
-POST .../directions/{did}/drafts/jobs
-  body: {topic_ids:[chosen for this direction],
-         topic_supplemental_contexts:{topic_id: note, ...},
-         length_multiplier:1, overwrite:true}
-GET  .../directions/{did}/drafts/jobs/{job_id}   # poll 5-10s → completed
-GET  .../directions/{did}/drafts                  # or download drafts_md
-```
-Chosen cards span multiple directions → one job per direction. Selecting cards has no save
-endpoint; the selection IS the `topic_ids` you pass.
+Borderline cards that need only a small fix to be safe can pass **with a noted caveat**; cards
+that would need fabrication, overclaim, or a hostile-community move FAIL.
 
 ## Required output structure
 
-Write to `04_drafts/` (UTF-8):
-- `selection.md` — the 36 cards with scores, the chosen top-N (with per-card supplemental
-  note), and the diversity rationale. MANDATORY artifact.
-- `drafts_md/{topic_id}.md` — each generated draft's `final_markdown`.
-- update `run_meta.json` with the draft `job_id`(s) and chosen `topic_ids`.
+Write to `04_screen/` (UTF-8):
+- `screening.md` — MANDATORY artifact. A row per card:
+  ```
+  | topic_id | direction | target_subreddit | verdict | reason |
+  |----------|-----------|------------------|:------:|--------|
+  | t_003_01 | direction_003 | r/SaaS | PASS | real pain, fields complete, brand只软提及 |
+  | t_004_07 | direction_004 | r/webdev | FAIL | 需要未验证的 Analytics 数据当事实 |
+  ```
+  Then a `## Passed set` list of the passing topic_ids (this is the handoff to stage 5).
+- update `run_meta.json` with `screened_pass_ids` (the passing topic_ids).
 
 ## Process
 
-1. Load 36 cards + maps + brief. Score each on the rubric; write the table to `selection.md`.
-2. Pick top-N keeping diversity. For each chosen card, write its supplemental note.
-3. Run EVALS (selection + note quality). Revise picks/notes until blocking passes.
-4. Fire draft job(s) per direction with topic_ids + supplemental contexts; poll to completed.
-5. Save drafts. Log manifest. Hand off to `post-optimization`.
+1. Load ALL cards + maps + brief. For each card, apply the 3-part binary gate.
+2. Record verdict + reason per card in `screening.md`; collect the passing topic_ids.
+3. Run EVALS (screening completeness + correctness). Fix any mis-judgment.
+4. Log manifest. Hand off the passing set to `topic-card-optimization`.
 
 ## Common mistakes
 
-- Picking by gut instead of the weighted rubric.
-- Top-N all from one subreddit/angle (no diversity).
-- Empty/generic supplemental notes ("make it better") — must target a specific gap.
-- Letting a `needs_extra_material` card draft without a placeholder instruction → fabrication.
+- Ranking or picking a top-N here (that's stage 5).
+- Writing supplemental notes or firing the draft job here (that's stage 5).
+- Passing a card that needs an unverified feature or fabricated data.
+- Failing a card just for being "average" — average-but-safe still PASSES (stage 5 ranks).
+- Forcing the count to 36 — the total is whatever stage 3 generated.

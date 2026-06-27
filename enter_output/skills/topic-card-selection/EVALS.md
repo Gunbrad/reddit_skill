@@ -1,41 +1,33 @@
-# EVALS — Topic Card Selection + Supplemental Notes (Stage 4)
+# EVALS — Topic Card Screening (Stage 4, binary gate)
 
-Two gates: (A) selection quality, (B) supplemental-note quality. **Blocking** must pass.
-Threshold: all blocking pass AND selection total ≥ 80/100.
+This stage is a binary safety/readiness filter. EVALS verify the screening was done
+**completely** and **correctly**, not that a top-N was ranked. **Blocking** must pass.
 
-## Gate A — Selection quality
-
-| # | Criterion | Blocking | Weight | Pass condition |
-|---|-----------|:---:|:---:|----------------|
-| A1 | All 36 scored on the rubric | ✅ | 20 | Every card has a weighted score recorded in selection.md |
-| A2 | Top-N = highest weighted scores | ✅ | 20 | Chosen set matches the ranking (no unexplained low-score picks) |
-| A3 | Diversity preserved | ✅ | 20 | No over-concentration on one subreddit + one angle; spread across directions |
-| A4 | Brand-safety floor | ✅ | 20 | No chosen card claims an unverified feature or reads as a pure ad |
-| A5 | Rationale recorded | ⬜ | 10 | selection.md explains why the top-N were chosen over near-misses |
-| A6 | N matches user intent | ⬜ | 10 | Count agreed with user; if unspecified, proposed and confirmed |
-
-## Gate B — Supplemental note quality (per chosen card)
+## Gate — Screening quality
 
 | # | Criterion | Blocking | Pass condition |
 |---|-----------|:---:|----------------|
-| B1 | Note targets a specific gap | ✅ | Each note addresses that card's weakest dimension / known issue, not generic "improve" |
-| B2 | needs_extra_material handled | ✅ | If card needs material, note instructs placeholder + no fabrication |
-| B3 | Brand calibration | ⬜ | Note steers brand exposure to ≤1-2 capabilities + disclosure when relevant |
-| B4 | Subreddit-fit guidance | ⬜ | Note adapts tone to the target community's promo tolerance |
-| B5 | Concise & API-ready | ⬜ | Short enough to pass verbatim as topic_supplemental_contexts value |
+| S1 | Every card judged | ✅ | All generated cards have a PASS/FAIL verdict in screening.md (none skipped) |
+| S2 | Verdict uses the 3-part gate | ✅ | Each verdict reflects community-compliant + production-ready + low-risk; not vibes |
+| S3 | No unsafe card passed | ✅ | No PASS card requires an unverified/"不可说" feature, fabricated data, or reads as a pure ad |
+| S4 | No safe card wrongly failed | ⬜ | "Average but safe" cards are PASS, not FAIL; FAILs have a concrete red-line/readiness reason |
+| S5 | Reason recorded | ⬜ | Each verdict has a short, specific reason (not blank / not "ok") |
+| S6 | Passed set handed off | ✅ | `## Passed set` lists the passing topic_ids; `screened_pass_ids` written to run_meta.json |
+
+Note: there is **no top-N and no fixed total** at this stage. Do not penalize the count.
 
 ## Failure → action
 
-- A1/A2 fail → re-score or re-pick to match ranking.
-- A3 fail → swap a duplicate-angle pick for the next diverse high-scorer.
-- A4/B2 fail → must fix before drafting (fabrication/overclaim risk).
-- B1 generic → rewrite the note against the card's lowest-scoring dimension.
-- Record both gate verdicts in `run_manifest.md`.
+- S1 fail → finish judging the un-screened cards.
+- S2/S3 fail → re-judge with the 3-part gate; demote any unsafe card to FAIL before handoff.
+- S4 fail → restore wrongly-failed safe cards to PASS (stage 5 will rank them).
+- S6 fail → write the passed set + `screened_pass_ids` before handing off.
+- Record the gate verdict in `run_manifest.md`.
 
 ## Reviewer prompt (optional subagent)
 
-"Read selection.md. Are all 36 cards scored, and does the chosen top-N match the ranking?
-Is the set diverse (not all one subreddit/angle)? Does any chosen card claim an unverified
-feature or read as an ad? For each chosen card, does its supplemental note target a specific
-weakness (not 'make it better'), and does it handle needs_extra_material with a placeholder
-instead of fabrication? List every violation."
+"Read screening.md. Is every generated card given a PASS/FAIL with a concrete reason? Does any
+PASS card require an unverified feature, fabricated data, a hostile community, or read as a
+pure ad (should be FAIL)? Is any merely-average-but-safe card wrongly FAILed (should be PASS)?
+Is the passed set listed for handoff? List every violation. Do NOT rank for quality — that is
+stage 5's job."
