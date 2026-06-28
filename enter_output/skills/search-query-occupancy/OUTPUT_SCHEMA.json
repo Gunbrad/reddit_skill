@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 3 Search Query Occupancy Output",
+  "type": "object",
+  "required": ["stage_id", "artifact_paths", "direction_outputs"],
+  "properties": {
+    "stage_id": { "const": "stage_3_search_query_occupancy" },
+    "artifact_paths": {
+      "type": "object",
+      "required": ["search_queries", "run_meta", "occupancy_heat_evidence"],
+      "properties": {
+        "search_queries": { "const": "03_search/search_queries.md" },
+        "run_meta": { "const": "03_search/run_meta.json" },
+        "occupancy_heat_evidence": { "const": "03_search/occupancy_heat_evidence.json" }
+      },
+      "additionalProperties": false
+    },
+    "direction_outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["direction_id", "topic_id", "chosen_query", "map_md", "map_json", "topic_cards"],
+        "properties": {
+          "direction_id": { "type": "string" },
+          "topic_id": { "type": "string" },
+          "chosen_query": { "type": "string" },
+          "map_md": { "type": "string", "pattern": "^03_search/maps/.+[.]md$" },
+          "map_json": { "type": "string", "pattern": "^03_search/maps/.+[.]json$" },
+          "topic_cards": { "type": "string", "pattern": "^03_search/topic_cards/.+" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

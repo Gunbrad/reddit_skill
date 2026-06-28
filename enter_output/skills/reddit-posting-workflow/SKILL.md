@@ -7,17 +7,51 @@ description: Use when running the end-to-end Reddit brand-posting pipeline for a
 
 ## Overview
 
-This is the entry point and router for a 7-stage pipeline that takes a client product
-from raw product facts to a finished, formatted Reddit post draft in Feishu. Each stage
-is a separate skill with its own EVALS. This skill owns: the **trigger chain**, the **run
-workspace convention**, and the **handoff contract** that guarantees each stage produces
-exactly what the next stage needs.
+This is the dispatcher for a 7-stage pipeline that takes a client product from raw product
+facts to a finished, formatted Reddit post draft in Feishu. The orchestrator owns the run
+workspace, stage routing, structured handoff, retry loop, and manifest. It does not write
+topics, queries, posts, comments, image prompts, or formatting itself.
 
-**Core principle:** every stage reads the previous stage's local artifact, validates it
-against that stage's EVALS, and only then proceeds. A stage that fails its own EVALS is
-sent back (打回重改) before handoff — never passed downstream broken.
+**Core principle:** every stage runs in a context-isolated worker. For each stage, the
+orchestrator reads `run_config.json` and `PIPELINE_CONTRACT.md`, builds a minimal
+`stage_input_packet`, launches an **isolated generator worker**, launches a separate
+**isolated evaluator worker**, records the evaluator verdict in `run_manifest.md`, writes the
+approved handoff packet, and only then moves to the next stage. The generator never grades
+itself.
+
+## Execution model: dispatcher + isolated workers
+
+This pipeline is long. Do not run all stages in one growing context; earlier-stage details
+pollute later stages and make EVALS unstable. Read these contracts once per task:
+
+- `CONTEXT_CONTRACT.md` - global isolation rules and fresh-session fallback.
+- `WORKER_CONTRACT.md` - generator vs evaluator worker responsibilities.
+- `PIPELINE_CONTRACT.md` - canonical stage inputs, outputs, and handoff paths.
+- `EVAL_WORKER_CONTRACT.md` - mandatory independent evaluation rules.
+
+For each stage:
+
+1. Read `run_config.json`.
+2. Read `PIPELINE_CONTRACT.md`.
+3. Build `stage_input_packet` from that stage's `INPUTS.md` whitelist.
+4. Launch an isolated generator worker with only that packet.
+5. Collect the artifact and draft `handoff_packet.json`.
+6. Launch an isolated evaluator worker with only the artifact, `EVALS.md`,
+   `OUTPUT_SCHEMA.json`, and minimal fact/brand files.
+7. Decide pass / retry / stop from the evaluator verdict.
+8. Write the verdict and artifact paths to `run_manifest.md`.
+9. Promote the draft handoff to the approved handoff packet only after pass.
+10. Pass only that approved handoff packet to the next stage.
+
+Use whichever runtime-agnostic isolation mechanism is available: isolated worker, subagent,
+child agent, task agent, worker thread, fresh session, or equivalent context-isolated
+execution. If no worker mechanism exists, emulate isolation with a fresh task / fresh run that
+receives only the current `stage_input_packet`, and record that fallback in the manifest.
 
 ## The 7 stages and their skills
+
+Stage 6 is a **coordinator** over four sub-skills (6a–6d); see the trigger chain and the
+post-optimization coordinator. The pipeline is still 7 logical stages.
 
 | # | Stage | Skill | Local artifact (the handoff) |
 |---|-------|-------|------------------------------|
@@ -26,7 +60,11 @@ sent back (打回重改) before handoff — never passed downstream broken.
 | 3 | 搜索 query + 工作流接口 + 搜索占位地图 + topic cards | `search-query-occupancy` | `03_search/search_queries.md` (+ maps, run_meta.json) |
 | 4 | topic card 筛选(二元门:全量筛出可进生产的卡) | `topic-card-selection` | `04_screen/screening.md` |
 | 5 | topic card 优化(爆帖潜能→TopN→补充说明含选题→生成草稿) | `topic-card-optimization` | `05_optimized_cards/optimization.md` (+ drafts) |
-| 6 | 帖子优化 + 写入飞书 + 生图 + 去AI化 + 目标社区 | `post-optimization` | `06_optimized/final_posts.md` (+ images, Feishu doc) |
+| 6 | 帖子优化(coordinator over 6a–6d) | `post-optimization` | `06_optimized/final_posts.md` + Feishu docs |
+| 6a | 去AI化/原生化(标题+正文+评论+备用标题) | `post-native-rewrite` | `06_optimized/native_posts.md` |
+| 6b | 事实核查 + 品牌安全 | `post-fact-brand-check` | `06_optimized/checked_posts.md` |
+| 6c | 目标社区 + 生图(分类/提示词/生成/复检) | `post-subreddit-image` | `06_optimized/final_posts.md` (+ images/) |
+| 6d | 写入飞书 + 生图文档 + 锚点 + 权限 | `post-feishu-publish` | Feishu 帖子/生图 docs + `feishu_links.md` |
 | 7 | 飞书排版 + 评论原生化 | `feishu-formatting` | `07_format/format_report.md` |
 
 ## Trigger chain (when to invoke which skill)
@@ -37,13 +75,22 @@ digraph pipeline {
   "new task / new product" -> "product-research" [label="stage 1"];
   "product-research" -> "topic-selection" [label="brief passes EVALS"];
   "topic-selection" -> "search-query-occupancy" [label="topics in Feishu"];
-  "search-query-occupancy" -> "topic-card-selection" [label="6 directions x M cards"];
+  "search-query-occupancy" -> "topic-card-selection" [label="directions x M cards"];
   "topic-card-selection" -> "topic-card-optimization" [label="cards that pass the gate"];
   "topic-card-optimization" -> "post-optimization" [label="top-N + drafts generated"];
-  "post-optimization" -> "feishu-formatting" [label="posts in Feishu"];
+  "post-optimization" -> "post-native-rewrite" [label="6a"];
+  "post-native-rewrite" -> "post-fact-brand-check" [label="6b: native text passes EVALS"];
+  "post-fact-brand-check" -> "post-subreddit-image" [label="6c: facts+brand safe"];
+  "post-subreddit-image" -> "post-feishu-publish" [label="6d: final_posts.md ready"];
+  "post-feishu-publish" -> "feishu-formatting" [label="posts in Feishu"];
   "feishu-formatting" -> "done" [label="format passes EVALS"];
 }
 ```
+
+Stage 6 is internally 6a -> 6b -> 6c -> 6d; the `post-optimization` coordinator spawns each
+as an isolated worker with its own evaluator. This is the only stage allowed to coordinate
+internal sub-workers; each sub-worker still receives only the input packet declared for its
+sub-task.
 
 You do not have to run all 7 in one session. Enter at the stage the user asks for, but
 **verify the upstream artifact exists and passed its EVALS** before starting. If it does
@@ -82,7 +129,7 @@ the ONE place users override the pipeline; stages must not hard-code what lives 
 
   // --- stage 5 (optimization: viral potential → top-N → notes → drafts) ---
   "top_n": null,                                // how many cards to optimize+draft (null = propose & confirm)
-  "draft_length_multiplier": 1,                 // passed to the draft job
+  "draft_length_multiplier": 1,                 // draft length: 更短0.3/稍短0.5/默认1/稍长1.8/更长2.5; longer≠better (more content = easier to expose). null = stage 5 picks per card by situation
   "supplemental_context": "",                   // global default note; per-card notes still allowed/override
 
   // --- stage 6 ---
@@ -121,7 +168,8 @@ If none was given, ask. Do NOT scatter artifacts outside the run folder.
   03_search/          search_queries.md, run_meta.json, maps/, materials/, topic_cards/
   04_screen/          screening.md            (binary gate: pass/fail per card)
   05_optimized_cards/ optimization.md, drafts_md/   (viral-potential top-N + notes + drafts)
-  06_optimized/       final_posts.md, images/ (png + prompts.md + image_feishu.md), feishu_links.md
+  06_optimized/       native_posts.md (6a), checked_posts.md (6b), final_posts.md (6c),
+                      images/ (png + prompts.md + image_feishu.md), feishu_links.md (6d)
   07_format/          format_report.md
   run_manifest.md     running log: stage, status, artifact paths, EVALS verdict
 ```

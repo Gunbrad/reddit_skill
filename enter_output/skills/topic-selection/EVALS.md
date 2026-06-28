@@ -10,7 +10,7 @@ Threshold: all blocking pass AND total ≥ 80/100. Score the SET, then each 选�
 |---|-----------|:---:|:---:|----------------|
 | S1 | Directions are mutually distinct | ✅ | 15 | No two 选题 would produce near-identical search queries; grouped under distinct 主线 |
 | S2 | Coverage of key personas/pains | ⬜ | 10 | Spread across the brief's priority personas, not all on one pain |
-| S3 | Count sufficient for stage 3 | ⬜ | 5 | Enough 选题 to yield the planned directions (each → 2 queries) |
+| S3 | Count sufficient for stage 3 | ⬜ | 5 | Enough 选题 to yield the planned directions (each 选题 → 1 chosen query from `queries_per_topic` candidates) |
 | S4 | 选题 Feishu doc created | ✅ | 0 | `02_topics/feishu_links.md` contains the 选题 doc URL; not merely "deferred" |
 
 ## Per-选题 rubric (every 选题 must pass blocking)
@@ -32,7 +32,12 @@ Threshold: all blocking pass AND total ≥ 80/100. Score the SET, then each 选�
 - Per-选题 blocking fail → rewrite that 选题; do not write it to Feishu.
 - Record set-level + per-选题 verdicts in `run_manifest.md`.
 
-## Reviewer prompt (optional subagent)
+## Reviewer prompt (MANDATORY evaluator worker)
+
+Under isolated-worker execution, this reviewer must run as a separate evaluator worker. It is
+not optional. If the runtime does not support subagents, emulate this with a fresh evaluation
+session that receives only topics.md, this EVALS.md, OUTPUT_SCHEMA.json, and the minimal
+fact index / brand-safety files needed to judge boundaries.
 
 "You are a Reddit-native content strategist. For each 选题: does it open from a user pain or
 from the product? Is the brand exposure natural (≤2 capabilities, no feature dump) or an ad?

@@ -76,6 +76,23 @@ Write to `03_search/` (UTF-8):
 - `maps/{direction_id}.md` + `.json` — downloaded occupancy maps for successful directions.
 - `materials/{direction_id}/` — downloaded search-urls / raw posts / post_cards as needed.
 - `topic_cards/{direction_id}.md` (+ raw) — the cards per direction (count per run_config).
+- `occupancy_heat_evidence.json` — MANDATORY structured heat evidence per direction, so stage 5
+  picks TopN on evidence, not vibes. Per direction record:
+  ```json
+  {
+    "direction_001": {
+      "similar_posts": [{"title": "...", "subreddit": "r/...", "upvotes": 0, "comments": 0, "url": "..."}],
+      "title_patterns": ["how I ... after ...", "is it just me or ..."],
+      "subreddit_behavior": "what gets upvoted / what gets removed here",
+      "comment_triggers": ["asking for others' workflow", "tool comparison"],
+      "recent_activity": "high/medium/low + rough cadence",
+      "moderation_risk": "low/medium/high + why (self-promo filter, etc.)",
+      "skepticism_angles": ["users distrust X", "common pushback is Y"]
+    }
+  }
+  ```
+  Build it from the downloaded maps + post_cards (the crawl already contains this signal);
+  do NOT fabricate numbers — if a field is unknown, mark it so.
 
 ### search_queries.md format
 
@@ -101,8 +118,9 @@ Write to `03_search/` (UTF-8):
 3. Create/reuse the project; create the run with the chosen queries (≤6 directions); prepare-all; poll.
 4. Read `search_occupancy_map_summary`. Keep success directions (re-run/replace failures).
 5. Run Gate B (direction sanity). Generate `topic_card_count` Topic Cards per success direction. Store them.
-6. Write `run_meta.json` (incl. `topic_to_direction`). Log manifest. Run Gate C.
-   Hand off the generated cards to `topic-card-selection`.
+6. Build `occupancy_heat_evidence.json` from the maps + post_cards (no fabricated numbers).
+7. Write `run_meta.json` (incl. `topic_to_direction`) + `handoff_packet.json`. Log manifest.
+   Run Gate C. Hand off the generated cards + heat evidence to `topic-card-selection`.
 
 ## Common mistakes
 

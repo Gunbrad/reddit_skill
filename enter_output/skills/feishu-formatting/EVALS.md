@@ -58,7 +58,12 @@ leftover metadata, missing brand spans, OP replies, destroyed resources).
   brand variants highlighted, OP replies removed count, `--detail full` verification result.
   Log verdict in manifest.
 
-## Reviewer prompt (optional subagent)
+## Reviewer prompt (MANDATORY evaluator worker)
+
+Under isolated-worker execution, this reviewer must run as a separate evaluator worker. It is
+not optional. If the runtime does not support subagents, emulate this with a fresh evaluation
+session that receives only the live Feishu doc detail, this EVALS.md, OUTPUT_SCHEMA.json,
+format_report.md, and minimal brand-safety files.
 
 "Read this Feishu post doc (full detail). Are only h1=titles and h2=Title/素材/Body/评论设计
 present? Is the 素材 block intact and the Metadata block gone? Are all usernames User-N with

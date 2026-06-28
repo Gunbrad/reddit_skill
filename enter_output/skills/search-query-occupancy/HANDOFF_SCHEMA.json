@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 3 Handoff Packet",
+  "type": "object",
+  "required": ["stage_id", "status", "inputs_read", "outputs", "eval_result", "open_questions"],
+  "properties": {
+    "stage_id": { "const": "stage_3_search_query_occupancy" },
+    "status": { "enum": ["draft", "pass", "fail"] },
+    "inputs_read": { "type": "array", "items": { "type": "string" } },
+    "outputs": {
+      "type": "object",
+      "required": ["direction_ids", "topic_to_direction", "run_meta_path", "heat_evidence_path"],
+      "properties": {
+        "direction_ids": { "type": "array", "items": { "type": "string" } },
+        "topic_to_direction": { "type": "object", "additionalProperties": { "type": "string" } },
+        "run_meta_path": { "const": "03_search/run_meta.json" },
+        "heat_evidence_path": { "const": "03_search/occupancy_heat_evidence.json" }
+      },
+      "additionalProperties": false
+    },
+    "eval_result": {
+      "type": "object",
+      "required": ["blocking", "score", "retry_needed", "verdict"],
+      "properties": {
+        "blocking": { "enum": ["pass", "fail"] },
+        "score": { "type": "number" },
+        "retry_needed": { "type": "boolean" },
+        "verdict": { "enum": ["pass", "fail"] }
+      },
+      "additionalProperties": true
+    },
+    "open_questions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

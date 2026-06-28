@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 4 Handoff Packet",
+  "type": "object",
+  "required": ["stage_id", "status", "inputs_read", "outputs", "eval_result", "open_questions"],
+  "properties": {
+    "stage_id": { "const": "stage_4_topic_card_selection" },
+    "status": { "enum": ["draft", "pass", "fail"] },
+    "inputs_read": { "type": "array", "items": { "type": "string" } },
+    "outputs": {
+      "type": "object",
+      "required": ["screening_path", "passed_cards_path", "passed_topic_ids"],
+      "properties": {
+        "screening_path": { "const": "04_screen/screening.md" },
+        "passed_cards_path": { "const": "04_screen/passed_cards.json" },
+        "passed_topic_ids": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "eval_result": {
+      "type": "object",
+      "required": ["blocking", "score", "retry_needed", "verdict"],
+      "properties": {
+        "blocking": { "enum": ["pass", "fail"] },
+        "score": { "type": "number" },
+        "retry_needed": { "type": "boolean" },
+        "verdict": { "enum": ["pass", "fail"] }
+      },
+      "additionalProperties": true
+    },
+    "open_questions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

@@ -68,6 +68,38 @@ order. Downstream stages parse by these headings.
 - 已验证能力 vs 未验证/不可说, per module
 ```
 
+## Compressed global outputs (MANDATORY — downstream stages read these, not the full brief)
+
+Besides `product_brief.md`, Stage 1 MUST also emit three compressed files under `{run}/global/`.
+Stages 2–7 read these instead of the full brief, to keep each stage's context small
+(CONTEXT_CONTRACT minimal-context principle). See `OUTPUT_SCHEMA.json` for exact shapes.
+
+1. `global/product_fact_index.json` — claim-level fact index for fact-checking:
+   ```json
+   {
+     "claims": [
+       {
+         "claim_id": "C001",
+         "claim": "Product supports GitHub sync.",
+         "status": "verified",
+         "source": "product_brief 三、核心卖点",
+         "allowed_wording": ["supports GitHub sync"],
+         "forbidden_wording": ["zero migration", "instant production handoff"]
+       }
+     ]
+   }
+   ```
+2. `global/claim_boundary_table.json` — buckets every claim as verified / unverified / forbidden:
+   ```json
+   { "verified": ["C001"], "unverified": ["C007"], "forbidden": ["C009"] }
+   ```
+3. `global/brand_safety_rules.md` — brand-exposure boundary, 不可说 content, sensitive wording
+   (≤1-2 capabilities per mention, disclosure rule, banned absolutes, competitor-tone rule).
+
+Every claim in the index MUST trace to a `product_brief.md` section. `forbidden`/`unverified`
+claims = the "不可说" features; downstream stages must never state them as fact. Keep the
+index small but complete: it is the default fact source for stages 2–7.
+
 ### The capability tree (能力树)
 
 The "核心功能模块" + "已验证能力边界" together form the capability tree. Each capability
@@ -102,8 +134,12 @@ For every competitor also record 用户画像 + 定价 (or "未公开" if unknow
    have evidence (mark unknown cells, don't invent).
 5. Write the differentiation conclusion: in one paragraph, what only this product does.
 6. List the capability boundary + unverified-features table explicitly.
-7. Run EVALS (see EVALS.md). Revise until blocking criteria pass.
-8. Log verdict + path in `run_manifest.md`. Hand off to `topic-selection`.
+7. **Emit the three `global/*` compressed files** (product_fact_index, claim_boundary_table,
+   brand_safety_rules) — every claim traceable to a brief section; 不可说 features bucketed
+   as unverified/forbidden. These are what stages 2–7 read by default.
+8. Run EVALS (see EVALS.md). Revise until blocking criteria pass.
+9. Write `01_product_brief/handoff_packet.json` (per HANDOFF_SCHEMA.json). Log verdict + paths
+   in `run_manifest.md`. Hand off to `topic-selection`.
 
 ## Common mistakes
 

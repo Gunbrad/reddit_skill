@@ -31,6 +31,7 @@ Three sub-gates: (A) queries before running the API, (B) directions after maps,
 | C2 | Each card has required fields | ✅ | title_direction, content_form, post_format, expression_mechanism, brand_exposure_method, target_subreddit present |
 | C3 | Brand exposure not an ad | ⬜ | brand_exposure_method surfaces product naturally, tied to a verified capability |
 | C4 | Cards within a direction are varied | ⬜ | Not near-duplicates; varied content forms / angles |
+| C5 | Heat evidence emitted | ✅ | `occupancy_heat_evidence.json` exists with per-direction similar_posts, title_patterns, subreddit_behavior, comment_triggers, recent_activity, moderation_risk, skepticism_angles; unknown fields marked, numbers not fabricated |
 
 ## Failure → action
 
@@ -39,7 +40,12 @@ Three sub-gates: (A) queries before running the API, (B) directions after maps,
 - Gate C fail → regenerate cards (overwrite:true) with a sharper supplemental_context.
 - Record all three gate verdicts + run_id in `run_meta.json`/`run_manifest.md`.
 
-## Reviewer prompt (optional subagent)
+## Reviewer prompt (MANDATORY evaluator worker)
+
+Under isolated-worker execution, this reviewer must run as a separate evaluator worker. It is
+not optional. If the runtime does not support subagents, emulate this with a fresh evaluation
+session that receives only the Stage 3 artifacts, this EVALS.md, OUTPUT_SCHEMA.json, and the
+minimal upstream handoff packet.
 
 "Read search_queries.md and the maps. (A) Does each 选题 list 3 candidate queries and pick the
 best one, each genuinely long-tail intent (not a broad keyword), with ≤6 directions one per

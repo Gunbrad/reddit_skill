@@ -26,8 +26,13 @@ Not for: viral-potential ranking, supplemental notes, or drafting (stage 5).
 
 ## Inputs
 
-- `03_search/topic_cards/{direction_id}.json` (ALL generated cards), the occupancy maps, `run_meta.json`.
-- `01_product_brief/product_brief.md` (capability boundary, red lines).
+Read only the files allowed by `INPUTS.md`.
+
+- `03_search/handoff_packet.json`, `03_search/topic_cards/{direction_id}.json`, the occupancy
+  maps, `03_search/occupancy_heat_evidence.json`, and `run_meta.json`.
+- `global/product_fact_index.json`, `global/claim_boundary_table.json`, and
+  `global/brand_safety_rules.md` for capability boundary and red lines. Do not read the full
+  product brief unless the compressed files are missing a needed fact and the manifest records why.
 - `run_config.json` (no count knobs apply here — the gate judges every card; total is whatever stage 3 produced, not forced to 36).
 
 ## The binary gate (judge EVERY card pass/fail)
@@ -65,7 +70,8 @@ Write to `04_screen/` (UTF-8):
 
 ## Process
 
-1. Load ALL cards + maps + brief. For each card, apply the 4-part binary gate.
+1. Load ALL current-run cards + maps + compressed global files. For each card, apply the
+   4-part binary gate.
 2. Record verdict + reason per card in `screening.md`; collect the passing topic_ids.
 3. Run EVALS (screening completeness + correctness). Fix any mis-judgment.
 4. Log manifest. Hand off the passing set to `topic-card-optimization`.

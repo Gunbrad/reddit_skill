@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 1 Product Research Output",
+  "type": "object",
+  "required": ["stage_id", "artifact_paths", "compressed_global_files", "brief_sections"],
+  "properties": {
+    "stage_id": { "const": "stage_1_product_research" },
+    "artifact_paths": {
+      "type": "object",
+      "required": ["product_brief"],
+      "properties": {
+        "product_brief": { "const": "01_product_brief/product_brief.md" }
+      },
+      "additionalProperties": false
+    },
+    "compressed_global_files": {
+      "type": "object",
+      "required": ["product_fact_index", "claim_boundary_table", "brand_safety_rules"],
+      "properties": {
+        "product_fact_index": { "const": "global/product_fact_index.json" },
+        "claim_boundary_table": { "const": "global/claim_boundary_table.json" },
+        "brand_safety_rules": { "const": "global/brand_safety_rules.md" }
+      },
+      "additionalProperties": false
+    },
+    "brief_sections": {
+      "type": "array",
+      "minItems": 6,
+      "items": {
+        "enum": [
+          "product_overview",
+          "target_users",
+          "differentiated_selling_points",
+          "competitor_analysis",
+          "limits_and_boundaries",
+          "verified_fact_snapshot"
+        ]
+      }
+    }
+  },
+  "additionalProperties": false
+}

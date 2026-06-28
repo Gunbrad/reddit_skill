@@ -25,7 +25,12 @@ Note: there is **no top-N and no fixed total** at this stage. Do not penalize th
 - S7 fail → write the passed set + `screened_pass_ids` before handing off.
 - Record the gate verdict in `run_manifest.md`.
 
-## Reviewer prompt (optional subagent)
+## Reviewer prompt (MANDATORY evaluator worker)
+
+Under isolated-worker execution, this reviewer must run as a separate evaluator worker. It is
+not optional. If the runtime does not support subagents, emulate this with a fresh evaluation
+session that receives only screening.md, passed_cards.json, this EVALS.md, OUTPUT_SCHEMA.json,
+and the minimal fact/brand files needed to judge safety.
 
 "Read screening.md. Is every generated card given a PASS/FAIL with a concrete reason? Does any
 PASS card require an unverified feature, fabricated data, a hostile community, lack a clear

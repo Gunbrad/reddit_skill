@@ -10,7 +10,8 @@ description: Use after a product brief exists and before generating search queri
 Decide the **content directions** for the campaign before any search or drafting. A 选题 is
 not a post — it's a brief that says: what content type, what narrative angle, what
 material/research is needed, how the brand surfaces, and why this direction is worth it.
-Each 选题 later spawns 2 search queries in stage 3.
+In stage 3 each 选题 yields `queries_per_topic` candidate long-tail queries (default 3); the
+single best candidate is chosen as that 选题's one search direction.
 
 **Core principle:** a good 选题 starts from a *real user pain or scenario*, not from a
 product feature. The product appears as something a user stumbles onto while solving that
@@ -25,7 +26,12 @@ Not for: writing search queries (stage 3) or actual posts (stages 4-5).
 
 ## Inputs
 
-- `01_product_brief/product_brief.md` (capability boundary, personas, differentiation, red lines).
+Read only the files allowed by `INPUTS.md`. By default this stage uses
+`global/product_fact_index.json`, `global/claim_boundary_table.json`, and
+`global/brand_safety_rules.md` instead of the full product brief. Re-read
+`01_product_brief/product_brief.md` only when the compressed files miss a required persona,
+boundary, or differentiation detail, and log that reason in `run_manifest.md`.
+
 - Run folder from orchestrator.
 - `run_config.json` if present. **Skip auto-generation** when the user specified 选题
   (`run_config.topics` non-empty, or `2 in skip_stages` / `provided_artifacts.topics`):
@@ -62,7 +68,8 @@ never overclaim.)
 
 ## Process
 
-1. Read the product brief: personas, pains, differentiation, red lines, "不可说" features.
+1. Read the compressed global files: personas/pains if present, fact index, claim boundary,
+   brand safety, and "不可说" features. Use the full brief only by the logged exception above.
 2. For each persona/pain, draft a 选题 that leads with the pain, not the product.
 3. Fill all 6 fields. For 品牌词露出, tie it to a specific verified capability; respect red lines.
 4. Group 选题 under 主线 so they are mutually distinct (stage 3 needs non-overlapping directions).

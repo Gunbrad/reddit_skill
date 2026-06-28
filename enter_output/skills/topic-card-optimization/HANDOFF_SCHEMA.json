@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 5 Handoff Packet",
+  "type": "object",
+  "required": ["stage_id", "status", "inputs_read", "outputs", "eval_result", "open_questions"],
+  "properties": {
+    "stage_id": { "const": "stage_5_topic_card_optimization" },
+    "status": { "enum": ["draft", "pass", "fail"] },
+    "inputs_read": { "type": "array", "items": { "type": "string" } },
+    "outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "post_id",
+          "topic_id",
+          "draft_path",
+          "topic_anchor",
+          "viral_intent",
+          "title_pattern_to_preserve",
+          "expected_comment_types",
+          "subreddit_risk_note",
+          "allowed_claim_ids",
+          "forbidden_claim_ids"
+        ],
+        "properties": {
+          "post_id": { "type": "string" },
+          "topic_id": { "type": "string" },
+          "draft_path": { "type": "string", "pattern": "^05_optimized_cards/drafts_md/.+[.]md$" },
+          "topic_anchor": { "type": "string" },
+          "viral_intent": {
+            "type": "object",
+            "required": ["core_hook", "emotional_trigger", "comment_engine", "must_preserve"],
+            "properties": {
+              "core_hook": { "type": "string" },
+              "emotional_trigger": { "type": "string" },
+              "comment_engine": { "type": "string" },
+              "must_preserve": { "type": "array", "minItems": 1, "items": { "type": "string" } }
+            },
+            "additionalProperties": false
+          },
+          "title_pattern_to_preserve": { "type": "string" },
+          "expected_comment_types": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "subreddit_risk_note": { "type": "string" },
+          "allowed_claim_ids": { "type": "array", "items": { "type": "string" } },
+          "forbidden_claim_ids": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    },
+    "eval_result": {
+      "type": "object",
+      "required": ["blocking", "score", "threshold", "retry_needed", "verdict"],
+      "properties": {
+        "blocking": { "enum": ["pass", "fail"] },
+        "score": { "type": "number" },
+        "threshold": { "const": 80 },
+        "retry_needed": { "type": "boolean" },
+        "verdict": { "enum": ["pass", "fail"] }
+      },
+      "additionalProperties": true
+    },
+    "open_questions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

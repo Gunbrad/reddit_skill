@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 5 Topic Card Optimization Output",
+  "type": "object",
+  "required": ["stage_id", "artifact_paths", "chosen_posts"],
+  "properties": {
+    "stage_id": { "const": "stage_5_topic_card_optimization" },
+    "artifact_paths": {
+      "type": "object",
+      "required": ["optimization", "drafts_dir", "run_meta"],
+      "properties": {
+        "optimization": { "const": "05_optimized_cards/optimization.md" },
+        "drafts_dir": { "const": "05_optimized_cards/drafts_md" },
+        "run_meta": { "const": "03_search/run_meta.json" }
+      },
+      "additionalProperties": false
+    },
+    "chosen_posts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "post_id",
+          "topic_id",
+          "draft_path",
+          "topic_anchor",
+          "heat_evidence_refs",
+          "viral_intent",
+          "title_pattern_to_preserve",
+          "expected_comment_types",
+          "subreddit_risk_note",
+          "allowed_claim_ids",
+          "forbidden_claim_ids"
+        ],
+        "properties": {
+          "post_id": { "type": "string" },
+          "topic_id": { "type": "string" },
+          "draft_path": { "type": "string", "pattern": "^05_optimized_cards/drafts_md/.+[.]md$" },
+          "topic_anchor": { "type": "string" },
+          "heat_evidence_refs": { "type": "array", "items": { "type": "string" } },
+          "viral_intent": {
+            "type": "object",
+            "required": ["core_hook", "emotional_trigger", "comment_engine", "must_preserve"],
+            "properties": {
+              "core_hook": { "type": "string" },
+              "emotional_trigger": { "type": "string" },
+              "comment_engine": { "type": "string" },
+              "must_preserve": { "type": "array", "minItems": 1, "items": { "type": "string" } }
+            },
+            "additionalProperties": false
+          },
+          "title_pattern_to_preserve": { "type": "string" },
+          "expected_comment_types": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "subreddit_risk_note": { "type": "string" },
+          "allowed_claim_ids": { "type": "array", "items": { "type": "string" } },
+          "forbidden_claim_ids": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

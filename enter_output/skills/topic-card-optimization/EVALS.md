@@ -45,6 +45,7 @@ diversity (not N cards of the same subreddit + angle).
 | V2 | Top-N = highest eligible | ✅ | Chosen set matches the ranking among P-eligible cards; N per run_config/user |
 | V3 | Diversity preserved | ✅ | No over-concentration on one subreddit + one angle |
 | V4 | Rationale recorded | ⬜ | optimization.md says why each chosen card beats near-misses |
+| V5 | Picks cite heat evidence | ✅ | Each TopN pick cites `occupancy_heat_evidence.json` (similar_posts / title_patterns / comment_triggers / skepticism_angles), not just a subjective hunch |
 
 ---
 
@@ -57,6 +58,18 @@ diversity (not N cards of the same subreddit + angle).
 | N3 | needs_extra_material handled | ✅ | If material needed, note instructs placeholder + no fabrication |
 | N4 | Brand calibration | ⬜ | Steers brand to ≤1-2 capabilities + disclosure when relevant |
 | N5 | Concise & API-ready | ⬜ | Short enough to pass verbatim as topic_supplemental_contexts value |
+| N6 | length_multiplier justified | ⬜ | The chosen `length_multiplier` (user value, else situational per the UI map) is recorded in optimization.md with a one-line why; not blindly maxed for length |
+
+---
+
+## H. Handoff viral_intent (blocking — Stage 6 depends on it)
+
+| # | Criterion | Blocking | Pass condition |
+|---|-----------|:---:|----------------|
+| H1 | viral_intent complete | ✅ | Each chosen post in `handoff_packet.json` has `core_hook`, `emotional_trigger`, `comment_engine`, and non-empty `must_preserve[]` |
+| H2 | title pattern + comment types | ✅ | `title_pattern_to_preserve` + `expected_comment_types[]` present, derived from heat evidence |
+| H3 | claim ids bound | ✅ | `allowed_claim_ids` / `forbidden_claim_ids` set from `global/product_fact_index.json` |
+| H4 | subreddit risk noted | ⬜ | `subreddit_risk_note` present |
 
 ---
 
@@ -69,7 +82,12 @@ diversity (not N cards of the same subreddit + angle).
 - N1 generic / N3 fail → rewrite the note (specific viral lift; placeholder, no fabrication).
 - Record P/V/N verdicts in `run_manifest.md`.
 
-## Reviewer prompt (optional subagent — run BLIND, don't say it's the client's product)
+## Reviewer prompt (MANDATORY evaluator worker - run BLIND; do not say it is the client's product)
+
+Under isolated-worker execution, this reviewer must run as a separate evaluator worker. It is
+not optional. If the runtime does not support subagents, emulate this with a fresh evaluation
+session that receives only optimization.md, the chosen-card artifact, handoff_packet.json,
+this EVALS.md, OUTPUT_SCHEMA.json, the heat evidence, and the minimal fact index.
 
 "Read optimization.md and the chosen cards. (P) Does any chosen card read as an ad / AI
 listicle / rely on unverified claims, or break its subreddit's rules? (V) For each chosen

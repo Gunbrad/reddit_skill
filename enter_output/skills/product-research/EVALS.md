@@ -16,6 +16,7 @@ Threshold: all blocking pass AND total ≥ 80/100.
 | 7 | User personas (优先/扩展/非目标) | ⬜ | 10 | All three present; non-target listed |
 | 8 | Sourcing & date | ⬜ | 5 | 整理日期 + source noted; verified snapshot dated |
 | 9 | Red-line / boundary section usable downstream | ✅ | 5 | 能力边界 table present; stage 5 can use it to avoid overclaim |
+| 10 | Compressed global files emitted | ✅ | 0 | `global/product_fact_index.json`, `global/claim_boundary_table.json`, `global/brand_safety_rules.md` all exist; every claim traces to a brief section; 不可说 features bucketed unverified/forbidden |
 
 ## Failure → action
 
@@ -24,7 +25,12 @@ Threshold: all blocking pass AND total ≥ 80/100.
 - Criterion 6 vague → rewrite wedge with a concrete capability competitors lack.
 - Record per-criterion result + total in `run_manifest.md`.
 
-## Reviewer prompt (optional subagent)
+## Reviewer prompt (MANDATORY evaluator worker)
+
+Under isolated-worker execution, this reviewer must run as a separate evaluator worker. It is
+not optional. If the runtime does not support subagents, emulate this with a fresh evaluation
+session that receives only the artifact, this EVALS.md, OUTPUT_SCHEMA.json, and the minimal
+source/fact context needed for evaluation.
 
 "You are a skeptical product analyst. Read product_brief.md. For each capability, is it
 labeled verified or unverified? Find any sentence that states an unverified feature as

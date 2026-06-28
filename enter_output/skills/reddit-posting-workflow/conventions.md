@@ -115,19 +115,37 @@ this standard. Goal: read like a real North-American Redditor, not a machine, no
 Self-check before handoff: slang reads natural (no pile-up), error-word rate ≤3% with
 native-style mistakes, voice matches a local Redditor with no Chinglish.
 
-## 5. The EVALS loop protocol (every stage)
+## 5. The EVALS loop protocol (every stage) — run the evaluator as a SEPARATE subagent
 
-Each stage ships an `EVALS.md` defining a scored rubric. The loop:
+Each stage ships an `EVALS.md` defining a scored rubric. The key rule: **the thing that
+produces the artifact must NOT be the thing that scores it.** Self-review inside the same
+context that just wrote the artifact is unreliable — the model rationalizes its own output.
+Use a fresh evaluator worker with no memory of how the artifact was produced.
 
-1. Produce the stage artifact.
-2. Score it against that stage's EVALS rubric (each criterion = pass / fail / score).
-3. If any **blocking** criterion fails → revise the artifact and re-score. Repeat until all
-   blocking criteria pass and the weighted score clears the stage threshold.
-4. Record the final verdict (per-criterion + total) in `run_manifest.md`.
+The loop:
+
+1. The **generator worker** creates the stage artifact and writes it to the canonical path.
+2. Spawn a **separate evaluator worker** (fresh context, see §7). Give it ONLY: the
+   artifact file path(s), this stage's `EVALS.md`, `OUTPUT_SCHEMA.json`, and the minimal
+   global context it needs to judge (usually `global/product_fact_index.json` and
+   `global/brand_safety_rules.md`). Do NOT tell it who wrote the artifact, what the
+   intended answer was, or "you already did this well". For de-AI / native rubrics, run the
+   evaluator **BLIND** — do not tell it the product is the client's (use each EVALS.md's
+   "Reviewer prompt"). The evaluator returns a per-criterion pass/fail + score + the specific
+   violations it found.
+3. If any **blocking** criterion fails → a fresh generator worker revises the artifact, then a
+   FRESH evaluator worker re-scores. Repeat until all blocking pass and the weighted score
+   clears the stage threshold. Each evaluation is a new evaluator (no carryover).
+4. Record the final verdict (per-criterion + total + evaluator's violations) in `run_manifest.md`.
 5. Only then hand off to the next stage.
 
 Blocking criteria are marked in each EVALS.md. Non-blocking criteria lower the score but do
 not by themselves stop handoff; use judgment and note residual risks in the manifest.
+
+If your agent runtime cannot spawn workers/subagents, emulate independent evaluation with a
+fresh evaluation session that receives only the artifact, EVALS, schema, and minimal fact
+context. Do not reuse the generation context. Note in the manifest that evaluation was an
+emulated fresh session.
 
 ## 6. Output discipline
 
@@ -136,3 +154,72 @@ not by themselves stop handoff; use judgment and note residual risks in the mani
 - Keep secrets (cookies, API keys) out of all written files. This includes the SmartContent
   session cookie AND the image-generation (gpt-image-2) API key — never write either into any
   artifact, prompts.md, image_feishu.md, the 生图 doc, or the manifest. Pass via env only.
+
+## 7. Isolated-worker execution & context isolation (portable across agent runtimes)
+
+The pipeline is long; if a single context carries every stage's reasoning forward, later
+stages get polluted by earlier stages' details and the model's attention degrades. So each
+stage (and each evaluation) should run in its **own isolated context**. The mechanism can be
+an isolated worker, subagent, child agent, task agent, worker thread, fresh session, or any
+equivalent context-isolated execution. If none exists, emulate isolation with a fresh task /
+fresh run that receives only the stage input packet (note the fallback in the manifest).
+
+### What is GLOBAL context (passed to every stage subagent)
+
+Only these cross every boundary, because every stage needs them:
+1. The **run folder path** (so the subagent reads/writes the right place).
+2. **`run_config.json`** (the only user-customization source).
+3. **`conventions.md`** (red lines, API auth, Feishu rules, native standard, this protocol).
+4. **`global/product_fact_index.json`** — compressed verified/unverified claim source.
+5. **`global/claim_boundary_table.json`** — verified / unverified / forbidden buckets.
+6. **`global/brand_safety_rules.md`** — brand exposure and banned wording rules.
+
+That's it. Everything else is stage-local.
+
+### What is STAGE-LOCAL context (passed to ONLY that stage)
+
+Each stage subagent receives **only its declared upstream artifact(s)** — never the full
+history of how they were produced. The contract per stage:
+
+| Stage / sub-stage | Stage-local inputs it receives | Writes |
+|---|---|---|
+| 1 product-research | raw product facts / source material | `01_product_brief/product_brief.md` + `global/*` |
+| 2 topic-selection | `01_product_brief/handoff_packet.json`; full brief only by logged exception | `02_topics/topics.md` + Feishu link |
+| 3 search-query-occupancy | `02_topics/handoff_packet.json`, `02_topics/topics.md` | `03_search/*` + `run_meta.json` + `occupancy_heat_evidence.json` |
+| 4 topic-card-selection | `03_search/handoff_packet.json`, current topic cards, `run_meta.json`, maps | `04_screen/screening.md`, `passed_cards.json` |
+| 5 topic-card-optimization | `04_screen/handoff_packet.json`, `passed_cards.json`, heat evidence, topic anchor, `run_meta.json` | `05_optimized_cards/*` + drafts + structured `viral_intent` handoff |
+| 6a post-native-rewrite | Stage-5 handoff + chosen `05_optimized_cards/drafts_md/*` | `06_optimized/native_posts.md` |
+| 6b post-fact-brand-check | `06_optimized/native_posts.md` | `06_optimized/checked_posts.md` |
+| 6c post-subreddit-image | `06_optimized/checked_posts.md` (+ image API spec) | `06_optimized/final_posts.md`, `images/*` |
+| 6d post-feishu-publish | `06_optimized/final_posts.md`, `images/*` | Feishu docs + `feishu_links.md` |
+| 7 feishu-formatting | `06_optimized/feishu_links.md` (the doc) | `07_format/format_report.md` |
+
+A stage worker does NOT need, and should NOT be handed, unrelated upstream detail (e.g.
+stage 6a does not need the occupancy maps or the screening reasoning — only the drafts +
+global context). Pass file paths, not pasted-in prior reasoning.
+
+### How to brief a stage subagent (prompt skeleton)
+
+Because a subagent starts blank, give it everything to work autonomously and nothing extra:
+
+```
+You are running <stage name> of the Reddit posting pipeline.
+Skill to follow: <skill folder>/SKILL.md  (read it first).
+Global context: run folder = <path>; read run_config.json, conventions.md,
+  global/product_fact_index.json, global/claim_boundary_table.json,
+  and global/brand_safety_rules.md.
+Your input artifact(s): <only this stage's declared inputs, as paths>.
+Do the stage, write the artifact to <canonical path>, then STOP.
+Do not read other stages' working files. Return a 5-line summary + the artifact path.
+```
+
+Then spawn a **separate evaluator worker** per §5 to score the result. Generator and
+evaluator are always different workers.
+
+### Orchestrator's job
+
+The orchestrator (this skill) holds the only routing view: it sequences stages, spawns each
+generator worker with the right global+local inputs, spawns the evaluator worker, reads
+the returned verdict, updates `run_manifest.md`, and decides handoff vs. 打回重改. The
+orchestrator passes **artifacts between stages, not contexts** — that is what keeps each
+stage's attention clean.
