@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 6d Feishu Publish Handoff",
+  "type": "object",
+  "required": ["stage_id", "status", "inputs_read", "outputs", "eval_result", "open_questions"],
+  "properties": {
+    "stage_id": { "const": "stage_6d_post_feishu_publish" },
+    "status": { "enum": ["draft", "pass", "fail"] },
+    "inputs_read": { "type": "array", "items": { "type": "string" } },
+    "outputs": {
+      "type": "object",
+      "required": ["feishu_links_path", "topic_doc_url", "post_doc_url", "image_doc_url"],
+      "properties": {
+        "feishu_links_path": { "const": "06_optimized/feishu_links.md" },
+        "topic_doc_url": { "type": "string" },
+        "post_doc_url": { "type": "string" },
+        "image_doc_url": { "type": ["string", "null"] },
+        "image_anchor_mapping_path": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "eval_result": { "type": "object", "required": ["blocking", "score", "retry_needed", "verdict"], "additionalProperties": true },
+    "open_questions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

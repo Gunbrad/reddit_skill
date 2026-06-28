@@ -44,6 +44,13 @@ $stageDirs = @(
   'feishu-formatting'
 )
 
+$stage6SubStageDirs = @(
+  'post-native-rewrite',
+  'post-fact-brand-check',
+  'post-subreddit-image',
+  'post-feishu-publish'
+)
+
 $contractFiles = @(
   'CONTEXT_CONTRACT.md',
   'WORKER_CONTRACT.md',
@@ -100,6 +107,27 @@ foreach ($stage in $stageDirs) {
   }
 }
 
+foreach ($stage in $stage6SubStageDirs) {
+  $dir = Join-Path $skillsRoot $stage
+  foreach ($file in @('INPUTS.md', 'OUTPUT_SCHEMA.json', 'HANDOFF_SCHEMA.json')) {
+    $path = Join-Path $dir $file
+    if (-not (Require-File $path "$stage/$file")) { continue }
+    if ($file -eq 'INPUTS.md') {
+      Require-Text $path "$stage/INPUTS.md" @(
+        'Allowed global files',
+        'Allowed stage files',
+        'Forbidden files'
+      )
+    } else {
+      try {
+        Get-Content -Raw -Encoding UTF8 -LiteralPath $path | ConvertFrom-Json | Out-Null
+      } catch {
+        Fail "$stage/$file is not valid JSON: $($_.Exception.Message)"
+      }
+    }
+  }
+}
+
 $evalFiles = Get-ChildItem -LiteralPath $skillsRoot -Recurse -File -Filter 'EVALS.md'
 foreach ($file in $evalFiles) {
   $text = Read-Text $file.FullName
@@ -114,7 +142,10 @@ foreach ($file in $evalFiles) {
 
 $orchestrator = Read-Text (Join-Path $workflowRoot 'SKILL.md')
 foreach ($term in @(
+  'CONTEXT_CONTRACT.md',
+  'WORKER_CONTRACT.md',
   'PIPELINE_CONTRACT.md',
+  'EVAL_WORKER_CONTRACT.md',
   'stage_input_packet',
   'isolated generator worker',
   'isolated evaluator worker',
@@ -133,6 +164,31 @@ foreach ($toolSpecific in @(
   if ($orchestrator -match [regex]::Escape($toolSpecific)) {
     Fail "orchestrator SKILL.md contains tool-specific execution wording '$toolSpecific'"
   }
+}
+
+$stage6Coordinator = Read-Text (Join-Path $skillsRoot 'post-optimization\SKILL.md')
+foreach ($term in @(
+  'Stage 6 coordinator',
+  'post-native-rewrite',
+  'post-fact-brand-check',
+  'post-subreddit-image',
+  'post-feishu-publish',
+  'Stage-5 handoff',
+  'chosen drafts',
+  'compressed global files',
+  '06_optimized/final_posts.md',
+  '06_optimized/feishu_links.md',
+  '06_optimized/handoff_packet.json'
+)) {
+  if ($stage6Coordinator -notmatch [regex]::Escape($term)) {
+    Fail "post-optimization/SKILL.md does not mention '$term'"
+  }
+}
+if ($stage6Coordinator -match [regex]::Escape('01_product_brief/product_brief.md')) {
+  Fail 'post-optimization/SKILL.md must not read full product_brief.md'
+}
+if ($stage6Coordinator -notmatch 'coordinator' -or $stage6Coordinator -notmatch 'does not generate|does not write|does not perform') {
+  Fail 'post-optimization/SKILL.md must describe Stage 6 as a coordinator, not a monolithic execution skill'
 }
 
 Require-Text (Join-Path $skillsRoot 'product-research\SKILL.md') 'product-research/SKILL.md' @(

@@ -1,70 +1,90 @@
 ---
 name: post-optimization
-description: Stage 6 coordinator of the Reddit posting pipeline. Use after stage-5 drafts are generated to turn them into finished, fact-safe, native Reddit posts in Feishu. This skill no longer does the work itself; it sequences four isolated worker sub-skills (post-native-rewrite -> post-fact-brand-check -> post-subreddit-image -> post-feishu-publish), each with its own mandatory evaluator worker.
+description: Stage 6 coordinator for the Reddit posting pipeline. Use after Stage 5 produces chosen drafts and a structured handoff packet. This skill schedules 6a-6d isolated workers; it does not generate the final post content itself.
 ---
 
-# Post Optimization — Stage 6 Coordinator
+# Post Optimization - Stage 6 Coordinator
 
-## Why this is now a coordinator
+## Role
 
-Stage 6 used to do everything in one context: de-AI rewrite, comment design, fact-check,
-alternate titles, subreddit picks, image prompts, image generation + re-check, Feishu writing,
-the 生图 doc, anchor mapping, and permissions. That is too much for one context: attention
-degrades and earlier concerns pollute later ones. Stage 6 is now a coordinator over
-**content-optimization** and **packaging**, implemented as four focused sub-skills. Each
-sub-skill runs as an **isolated worker** with its own EVALS scored by a **separate evaluator
-worker**.
+This is the Stage 6 coordinator. It does not perform rewriting, fact checking, subreddit
+selection, image generation, Feishu publishing, or evaluation directly.
 
-The Stage-5 `handoff_packet.json` is the core input. Its per-post `viral_intent`
-(`core_hook`, `emotional_trigger`, `comment_engine`, `must_preserve[]`) must survive 6a and be
-reported in the Stage-6 handoff.
+It only builds sub-stage input packets, launches isolated generator workers, launches
+separate isolated evaluator workers, records verdicts in `run_manifest.md`, and promotes
+approved artifacts into the Stage 6 `handoff_packet.json`.
 
-## The four sub-stages (run in order)
+## Allowed Inputs
 
-| Sub | Skill | Input -> Output | Owns |
-|-----|-------|-----------------|------|
-| 6a content-optimization | `post-native-rewrite` | `05_optimized_cards/drafts_md/*` + Stage-5 handoff -> `06_optimized/native_posts.md` | de-AI Title+Body, >=3 backup titles, native comments, viral_intent preservation |
-| 6b content-optimization gate | `post-fact-brand-check` | `native_posts.md` -> `06_optimized/checked_posts.md` | fact accuracy vs fact index, brand-exposure safety |
-| 6c packaging | `post-subreddit-image` | `checked_posts.md` -> `06_optimized/final_posts.md` (+ `images/`) | >=3 subreddits, image classify/prompt/generate/re-check |
-| 6d packaging | `post-feishu-publish` | `final_posts.md` (+ `images/`) -> Feishu docs + `feishu_links.md` | post doc, image doc + anchors, topic doc check, permissions |
+Stage 6 can read only:
 
-Each sub-skill ships its own `SKILL.md` + `EVALS.md` (6c also ships `IMAGE_PROMPT_EVALS.md`).
-The de-AI / native rubric (6a) is still the heart of stage-6 quality control.
+- `run_config.json`
+- compressed global files:
+  - `global/product_fact_index.json`
+  - `global/claim_boundary_table.json`
+  - `global/brand_safety_rules.md`
+- Stage-5 handoff: `05_optimized_cards/handoff_packet.json`
+- chosen drafts named by that handoff: `05_optimized_cards/drafts_md/{post_id}.md`
+- approved Stage 6 sub-stage artifacts as they are produced
 
-## Coordinator process
+Do not read the full product brief here. If a sub-stage lacks a fact, it must use the
+compressed fact files or stop with a blocker for the orchestrator.
 
-For each sub-stage in order 6a -> 6b -> 6c -> 6d:
-1. Build the sub-stage input packet from `INPUTS.md`, the Stage-5 handoff, and the already
-   approved Stage-6 artifact from the previous sub-stage.
-2. Spawn an **isolated generator worker** for that sub-skill. Give it only the compressed
-   global files (`global/product_fact_index.json`, `global/claim_boundary_table.json`,
-   `global/brand_safety_rules.md`), `run_config.json`, and declared stage-local artifact paths.
-   Do not pass prior workers' reasoning.
-3. Spawn a **separate isolated evaluator worker** with that sub-skill's `EVALS.md`,
-   `OUTPUT_SCHEMA.json`, the artifact, and minimal fact/brand or Stage-5 handoff context.
-4. If any blocking criterion fails -> send back to a fresh generator worker (打回重改) and
-   re-evaluate. Only on pass, record the verdict in `run_manifest.md` and proceed to the next sub-stage.
-5. Pass **artifacts and approved handoff packets, not contexts**, between sub-stages.
+## Sub-Stage Order
 
-Do not run all four in one context yourself. If your runtime has no worker/subagent support,
-emulate isolation: between sub-stages, start a fresh session and re-read only that sub-stage's
-declared inputs (note the fallback in the manifest).
+Run these sub-stage skills in order:
 
-## Stage-6 exit criteria (before handing to stage 7)
+| Sub-stage | Skill | Input | Output |
+|---|---|---|---|
+| 6a content-optimization | `post-native-rewrite` | Stage-5 handoff + chosen drafts + compressed global files | `06_optimized/native_posts.md` |
+| 6b fact / brand gate | `post-fact-brand-check` | `06_optimized/native_posts.md` + compressed global files | `06_optimized/checked_posts.md` |
+| 6c subreddit + image packaging | `post-subreddit-image` | `06_optimized/checked_posts.md` + compressed global files | `06_optimized/final_posts.md`, optional `06_optimized/images/*` |
+| 6d Feishu publishing | `post-feishu-publish` | `06_optimized/final_posts.md`, images, topic doc files | `06_optimized/feishu_links.md`, optional `06_optimized/images/image_feishu.md` |
 
-- 6a EVALS pass (de-AI total ≥ 85, blocking pass).
-- 6a viral-intent preservation passes: final title/body/comment design retain Stage-5
-  `core_hook`, `emotional_trigger`, `comment_engine`, and every `must_preserve` detail.
-- 6b EVALS pass (no unverified feature as fact; brand-safe).
-- 6c EVALS pass (≥3 subreddits; any image passes IMAGE_PROMPT_EVALS).
-- 6d EVALS pass (帖子 doc + 选题 doc exist; 生图 doc when images exist; correct doc count;
-  docs public-editable).
-- The 帖子 doc URL is recorded in `06_optimized/feishu_links.md` → this is stage 7's input.
+The required final Stage 6 artifacts are:
 
-## Common mistakes
+- `06_optimized/final_posts.md`
+- `06_optimized/feishu_links.md`
+- `06_optimized/handoff_packet.json`
 
-- Running stage 6 as one big context instead of four isolated workers.
-- Letting the generator worker that wrote an artifact grade its own work (use a separate evaluator).
-- Skipping a sub-stage's EVALS and handing a broken artifact downstream.
-- Passing prior sub-agents' full reasoning instead of just the next input artifact.
-- Flattening the Stage-5 viral_intent while trying to make the post sound native.
+## Coordinator Process
+
+For each sub-stage:
+
+1. Build the sub-stage input packet from that sub-stage's `INPUTS.md`.
+2. Launch an isolated generator worker for the sub-stage skill.
+3. Launch an isolated evaluator worker with the artifact, sub-stage `EVALS.md`,
+   `OUTPUT_SCHEMA.json`, and minimal required context.
+4. If evaluation fails, pass only the evaluator failure report plus the original input packet
+   to a fresh retry generator worker.
+5. If evaluation passes, record the verdict and artifact path in `run_manifest.md`.
+6. Pass only the approved artifact path and approved handoff data to the next sub-stage.
+
+Stage 6 has explicit permission to coordinate these 6a-6d sub-workers. Those workers may not
+create additional nested workers unless the top-level orchestrator explicitly authorizes it.
+
+## Stage-5 Viral Intent Preservation
+
+The Stage-5 handoff contains per-post `viral_intent`:
+
+- `core_hook`
+- `emotional_trigger`
+- `comment_engine`
+- `must_preserve[]`
+
+6a must preserve that intent. A native-sounding rewrite that loses the Stage-5 hook, tension,
+concrete scene, or discussion engine fails the 6a evaluator and cannot proceed to 6b.
+
+## Stage 6 Handoff
+
+After 6d passes, write `06_optimized/handoff_packet.json` with:
+
+- `stage_id: stage_6_post_optimization`
+- approved `final_posts.md` path
+- approved `feishu_links.md` path
+- post Feishu doc URL
+- image doc URL or explicit `null`
+- per-post viral-intent preservation verdict
+- sub-stage evaluator verdicts for 6a, 6b, 6c, and 6d
+
+Only this approved handoff packet can feed Stage 7.

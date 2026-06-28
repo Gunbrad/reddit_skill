@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 6b Fact Brand Check Output",
+  "type": "object",
+  "required": ["stage_id", "artifact_paths", "posts"],
+  "properties": {
+    "stage_id": { "const": "stage_6b_post_fact_brand_check" },
+    "artifact_paths": {
+      "type": "object",
+      "required": ["checked_posts"],
+      "properties": {
+        "checked_posts": { "const": "06_optimized/checked_posts.md" }
+      },
+      "additionalProperties": false
+    },
+    "posts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["post_id", "claim_check_verdict", "brand_safety_verdict", "check_log"],
+        "properties": {
+          "post_id": { "type": "string" },
+          "claim_check_verdict": { "enum": ["pass", "fail"] },
+          "brand_safety_verdict": { "enum": ["pass", "fail"] },
+          "check_log": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

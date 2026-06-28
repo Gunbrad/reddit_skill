@@ -48,7 +48,7 @@ skills/
   feishu-formatting/          # Stage 7
 ```
 
-Each main stage directory includes:
+Each main stage directory and each Stage 6 sub-stage directory includes:
 
 - `SKILL.md`
 - `EVALS.md`

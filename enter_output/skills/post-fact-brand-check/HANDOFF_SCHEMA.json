@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 6b Fact Brand Check Handoff",
+  "type": "object",
+  "required": ["stage_id", "status", "inputs_read", "outputs", "eval_result", "open_questions"],
+  "properties": {
+    "stage_id": { "const": "stage_6b_post_fact_brand_check" },
+    "status": { "enum": ["draft", "pass", "fail"] },
+    "inputs_read": { "type": "array", "items": { "type": "string" } },
+    "outputs": {
+      "type": "object",
+      "required": ["checked_posts_path", "claim_check_summary", "brand_safety_summary"],
+      "properties": {
+        "checked_posts_path": { "const": "06_optimized/checked_posts.md" },
+        "claim_check_summary": { "type": "string" },
+        "brand_safety_summary": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "eval_result": { "type": "object", "required": ["blocking", "score", "retry_needed", "verdict"], "additionalProperties": true },
+    "open_questions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}
