@@ -62,6 +62,26 @@ foreach ($file in $contractFiles) {
   Require-File (Join-Path $workflowRoot $file) $file | Out-Null
 }
 
+$readmePath = Join-Path $Root 'enter_output\README.md'
+Require-Text $readmePath 'enter_output/README.md' @(
+  'CONTEXT_CONTRACT.md',
+  'WORKER_CONTRACT.md',
+  'PIPELINE_CONTRACT.md',
+  'EVAL_WORKER_CONTRACT.md',
+  'INPUTS.md',
+  'OUTPUT_SCHEMA.json',
+  'HANDOFF_SCHEMA.json',
+  'stage_input_packet',
+  'isolated generator worker',
+  'isolated evaluator worker',
+  'approved `handoff_packet.json`',
+  'post-optimization',
+  'post-native-rewrite',
+  'post-fact-brand-check',
+  'post-subreddit-image',
+  'post-feishu-publish'
+)
+
 Require-Text (Join-Path $workflowRoot 'CONTEXT_CONTRACT.md') 'CONTEXT_CONTRACT.md' @(
   'isolated worker',
   'fresh session',
@@ -228,6 +248,9 @@ foreach ($subStage in @(
 )) {
   Require-File (Join-Path $skillsRoot "$subStage\SKILL.md") "$subStage/SKILL.md" | Out-Null
   Require-File (Join-Path $skillsRoot "$subStage\EVALS.md") "$subStage/EVALS.md" | Out-Null
+  Require-File (Join-Path $skillsRoot "$subStage\INPUTS.md") "$subStage/INPUTS.md" | Out-Null
+  Require-File (Join-Path $skillsRoot "$subStage\OUTPUT_SCHEMA.json") "$subStage/OUTPUT_SCHEMA.json" | Out-Null
+  Require-File (Join-Path $skillsRoot "$subStage\HANDOFF_SCHEMA.json") "$subStage/HANDOFF_SCHEMA.json" | Out-Null
 }
 
 if ($failures.Count -gt 0) {
