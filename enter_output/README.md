@@ -128,3 +128,150 @@ variables for API cookies and keys.
 
 All final user-facing Feishu docs must be public-editable according to the workflow
 conventions.
+
+## Python Runtime
+
+The lightweight Python layer is an execution shell for the existing Skill contracts. It does
+not redesign stages, schemas, handoff names, eval rules, Feishu policy, or SmartContent rules.
+
+### Install
+
+The runtime uses the Python standard library. Tests require `pytest`:
+
+```powershell
+python -m pip install pytest
+```
+
+### Model providers
+
+DeepSeek is the default real provider. Do not put API keys in files.
+
+```powershell
+$env:DEEPSEEK_API_KEY = "..."
+$env:DEEPSEEK_MODEL = "deepseek-v4-flash"
+```
+
+Dry run without model spend:
+
+```powershell
+python enter_output\pipeline.py start --provider mock --config enter_output\live_run\run_config.json --run-id mock_full
+```
+
+OpenAI-compatible provider for future GPT-compatible gateways:
+
+```powershell
+$env:MODEL_API_KEY = "..."
+$env:MODEL_API_BASE_URL = "https://api.example.com/v1"
+$env:MODEL_NAME = "model-name"
+python enter_output\pipeline.py start --provider openai-compatible --config enter_output\live_run\run_config.json
+```
+
+Other providers can be added by implementing `ModelClient.complete()` in
+`runtime/model_client.py`; the runner only depends on that interface.
+
+### Commands
+
+Start a run:
+
+```powershell
+python enter_output\pipeline.py start --config enter_output\live_run\run_config.json --run-id enter_001 --provider deepseek
+```
+
+Resume a paused or failed run:
+
+```powershell
+python enter_output\pipeline.py resume --run-id enter_001 --provider deepseek
+```
+
+Rerun one stage and continue:
+
+```powershell
+python enter_output\pipeline.py rerun-stage --run-id enter_001 --stage topic-card-selection --provider deepseek
+```
+
+Limit stages for a smoke test:
+
+```powershell
+python enter_output\pipeline.py start --provider mock --config enter_output\live_run\run_config.json --run-id smoke_001 --stages product-research,topic-selection
+```
+
+Stdout is one short JSON status object. Detailed responses, candidates, evals, manifests, and
+approved artifacts are written under `enter_output/runs/{run_id}/`.
+
+### Run artifacts
+
+For each stage, the runtime writes:
+
+- `{stage_dir}/input_manifest.json`
+- `{stage_dir}/runtime/attempt_001/generator_raw_response.json`
+- `{stage_dir}/runtime/attempt_001/candidate_output.json`
+- `{stage_dir}/runtime/attempt_001/candidate_handoff_packet.json`
+- `{stage_dir}/runtime/attempt_001/eval_raw_response.json`
+- `{stage_dir}/runtime/attempt_001/eval_result.json`
+- `{stage_dir}/approved_output.json`
+- `{stage_dir}/handoff_packet.json` for top-level stages
+
+Stage 6 sub-stage handoffs are written as `06_optimized/6a_handoff_packet.json` through
+`06_optimized/6d_handoff_packet.json`. After 6d passes, Python synthesizes the coordinator
+`06_optimized/handoff_packet.json` with `stage_id: stage_6_post_optimization`.
+
+### Generator response convention
+
+Existing schemas define the stage output and handoff, but not a machine envelope for model
+responses. The runtime adds this minimal convention:
+
+```json
+{
+  "output": {},
+  "handoff": {},
+  "files": {
+    "run-relative/path.md": "file content"
+  },
+  "external_actions": []
+}
+```
+
+`output` must match the stage `OUTPUT_SCHEMA.json`. `handoff` is promoted only after the
+independent evaluator passes; Python injects the final `eval_result` and validates it against
+`HANDOFF_SCHEMA.json`.
+
+### Feishu actions
+
+Python never runs `lark-cli`. If a generator returns an external Feishu action, the run pauses
+and writes `actions/{action_id}.json`:
+
+```json
+{
+  "status": "needs_external_action",
+  "action_id": "feishu_001",
+  "action_type": "feishu.create_document",
+  "title": "Document title",
+  "content_file": "06_optimized/final_posts.md",
+  "result_file": "actions/feishu_001.result.json"
+}
+```
+
+The host conversation creates/updates the Feishu document with `lark-cli`, writes the result
+JSON containing the document id and URL to `result_file`, then runs `resume`.
+
+### Search placeholder project
+
+Optional search placeholder creation is enabled only after `product-research` has passed
+schema and eval:
+
+```json
+{
+  "search_project_placeholder": {
+    "enabled": true,
+    "api_url_env": "SEARCH_PLACEHOLDER_API_URL",
+    "api_key_env": "SEARCH_PLACEHOLDER_API_KEY",
+    "project": {
+      "type": "search_occupancy_placeholder"
+    }
+  }
+}
+```
+
+The runtime uses `run_id` as the idempotency key and saves the receipt to
+`external/search_project.json`. API failure pauses the run and does not regenerate the product
+brief; `resume` retries only the external call.
