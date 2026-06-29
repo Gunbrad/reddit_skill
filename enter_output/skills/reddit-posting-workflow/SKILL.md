@@ -20,14 +20,19 @@ Read these contracts before routing a run:
 - `CONTEXT_CONTRACT.md` - context isolation, whitelist reads, fresh-session fallback.
 - `WORKER_CONTRACT.md` - generator worker vs evaluator worker responsibilities.
 - `EVAL_WORKER_CONTRACT.md` - mandatory independent evaluation and manifest logging.
+- `PROMPT_INJECTION_CONTRACT.md` - subagent prompt packets, instruction files, read order,
+  business inputs, and extra-read rules.
 
 ## Execution Model
 
 For every stage, execute this sequence:
 
 1. Read the run folder's `run_config.json`.
-2. Read `PIPELINE_CONTRACT.md` and the current stage's `INPUTS.md`.
-3. Build `stage_input_packet` containing only allowed global files and allowed stage files.
+2. Read `PIPELINE_CONTRACT.md`, `PROMPT_INJECTION_CONTRACT.md`, and the current stage's
+   `INPUTS.md`.
+3. Build `stage_input_packet` containing the stage `Role prompt`, required instruction files,
+   optional prompt files from `run_config.prompt_packs`, `Business input files`, read order, and only
+   the allowed global / stage files.
 4. Launch an **isolated generator worker** with that packet.
 5. Collect the stage artifact and draft `handoff_packet.json`.
 6. Launch an **isolated evaluator worker** with only the artifact, `EVALS.md`,
@@ -43,6 +48,10 @@ Use any runtime-supported isolation mechanism: isolated worker, subagent, child 
 agent, worker thread, fresh session, or equivalent context-isolated execution. If no native
 worker mechanism exists, emulate isolation with a fresh task / fresh run that receives only
 the `stage_input_packet`, and record the fallback in `run_manifest.md`.
+
+Prompt files injected into a worker refine style and business judgment only. They must not
+override `INPUTS.md` forbidden reads, fact boundaries, schemas, secret handling, handoff
+rules, or the separate evaluator requirement.
 
 ## Canonical Stages
 

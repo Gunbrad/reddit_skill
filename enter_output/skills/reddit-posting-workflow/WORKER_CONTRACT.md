@@ -25,6 +25,9 @@ The generator and the evaluator for a stage are ALWAYS two different workers. A 
   `global/brand_safety_rules.md`, `global/campaign_policy.md`).
 - Allowed stage files: the upstream stage's **approved artifact** + **approved
   `handoff_packet.json`** only.
+- Required instruction files and optional prompt files named in the stage prompt packet
+  (`PROMPT_INJECTION_CONTRACT.md`). Prompt files guide style and judgment; they do not expand
+  business input access unless `INPUTS.md` also allows that read.
 
 **Must NOT:**
 - Read anything in the stage's "Forbidden files" list (full history, prior scratchpads,
@@ -54,6 +57,8 @@ The generator and the evaluator for a stage are ALWAYS two different workers. A 
 - Minimal global files needed to judge — typically `global/product_fact_index.json` and/or
   `global/brand_safety_rules.md`. For stages that must preserve Stage-5 intent, also the
   upstream `handoff_packet.json` (to confirm `viral_intent.must_preserve` survived).
+- Evaluator instruction files named in `PROMPT_INJECTION_CONTRACT.md`; for blind evaluations,
+  do not provide prompt files that reveal the desired answer or the generator's reasoning.
 
 **Must NOT:**
 - Read the full upstream materials, the generator's reasoning, or the conversation history.

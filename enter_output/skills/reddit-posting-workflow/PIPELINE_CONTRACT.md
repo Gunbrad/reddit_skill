@@ -3,8 +3,8 @@
 The single source of truth for what each stage reads, writes, and hands off. Every stage's
 `INPUTS.md`, `OUTPUT_SCHEMA.json`, and `HANDOFF_SCHEMA.json` must agree with this table. A
 stage may depend ONLY on an upstream stage's **approved artifact** + **approved
-`handoff_packet.json`**. Reading any file not whitelisted in the stage's `INPUTS.md` is
-forbidden (CONTEXT_CONTRACT §5).
+`handoff_packet.json`**. Reading any file not whitelisted in the stage's `INPUTS.md` or
+`PROMPT_INJECTION_CONTRACT.md` prompt packet is forbidden (CONTEXT_CONTRACT §5).
 
 ## Pipeline shape
 

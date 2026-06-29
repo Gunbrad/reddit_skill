@@ -1,5 +1,52 @@
 # Stage 6a Inputs - post-native-rewrite
 
+## Agent prompt packet
+
+### Role prompt
+
+You are the Stage 6a post-native-rewrite generator worker. Rewrite chosen drafts into
+Reddit-native Title, Body, and comment designs while preserving every Stage-5 `viral_intent`
+field. Native but flattened is a failure.
+
+### Required instruction files
+
+Read in order:
+
+1. `repo:enter_output/skills/reddit-posting-workflow/PROMPT_INJECTION_CONTRACT.md`
+2. `repo:enter_output/skills/reddit-posting-workflow/CONTEXT_CONTRACT.md`
+3. `repo:enter_output/skills/reddit-posting-workflow/WORKER_CONTRACT.md`
+4. `repo:enter_output/skills/reddit-posting-workflow/conventions.md`
+5. `repo:enter_output/skills/post-native-rewrite/SKILL.md`
+6. `workspace:reddit/提示词/reddit_帖子文档改写通用提示词.md`
+7. `workspace:reddit/提示词/爆帖拆解复刻提示词.md`
+8. `workspace:reddit/接口test/帖子native化/评价体系.md`
+
+### Optional instruction files
+
+- Files listed in `run_config.prompt_packs.post-native-rewrite.extra_instruction_files`.
+
+### Business input files
+
+- `run:run_config.json`
+- `run:05_optimized_cards/handoff_packet.json`
+- `run:05_optimized_cards/drafts_md/{post_id}.md` for chosen posts named in the Stage 5 handoff.
+- `run:global/product_fact_index.json`
+- `run:global/claim_boundary_table.json`
+- `run:global/brand_safety_rules.md`
+
+### Read order
+
+1. Required instruction files.
+2. Optional instruction files explicitly listed in `run_config`.
+3. Business input files.
+4. `repo:enter_output/skills/post-native-rewrite/OUTPUT_SCHEMA.json`
+5. `repo:enter_output/skills/post-native-rewrite/HANDOFF_SCHEMA.json`
+6. `repo:enter_output/skills/post-native-rewrite/EVALS.md` for self-check only; the generator cannot pass itself.
+
+### Allowed extra reads
+
+- None by default. Do not open Stage 3 maps, Stage 4 screening detail, all topic cards, or unchosen drafts.
+
 ## Allowed global files
 
 - `run_config.json`

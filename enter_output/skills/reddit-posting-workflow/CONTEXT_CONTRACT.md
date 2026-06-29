@@ -30,8 +30,9 @@ fixes all four.
    current stage's input packet (the files whitelisted in that stage's `INPUTS.md`). Note in
    the manifest that isolation was emulated, not native.
 5. **Whitelist-only reads.** A stage worker may read ONLY the files allowed by that stage's
-   `INPUTS.md` (its "Allowed global files" + "Allowed stage files"). Reading anything in the
-   "Forbidden files" list is a contract violation.
+   `INPUTS.md` and `PROMPT_INJECTION_CONTRACT.md` prompt packet (instruction files, business
+   inputs, allowed global files, allowed stage files, and allowed extra reads). Reading
+   anything in the "Forbidden files" list is a contract violation.
 6. **No inherited context.** A stage worker MUST NOT inherit: the full prior conversation,
    previous stages' scratchpads, failed/abandoned drafts, raw exploration logs, or unrelated
    run folders. It starts clean and loads only its input packet.
@@ -62,6 +63,8 @@ be logged (which fact, why) in `run_manifest.md`.
 - `WORKER_CONTRACT.md` — defines the worker roles (generator vs evaluator) and their I/O.
 - `PIPELINE_CONTRACT.md` — defines the canonical inputs/outputs/handoff path per stage.
 - `EVAL_WORKER_CONTRACT.md` — defines mandatory, independent evaluation.
+- `PROMPT_INJECTION_CONTRACT.md` — defines subagent prompt packets, required instruction
+  files, business inputs, read order, and extra-read rules.
 - Per-stage `INPUTS.md` — the concrete read whitelist/forbidden list for that stage.
 - Per-stage `OUTPUT_SCHEMA.json` / `HANDOFF_SCHEMA.json` — the concrete artifact/handoff shape.
 

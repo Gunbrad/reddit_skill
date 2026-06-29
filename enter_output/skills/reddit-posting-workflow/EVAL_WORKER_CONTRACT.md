@@ -19,6 +19,9 @@ may see.
    to judge (usually `global/product_fact_index.json` and/or `global/brand_safety_rules.md`;
    plus the upstream `handoff_packet.json` when it must verify preserved intent). It does NOT
    read full upstream materials, the generator's reasoning, or conversation history.
+   `PROMPT_INJECTION_CONTRACT.md` controls the evaluator prompt packet; blind evaluators must
+   not receive prompt files that reveal the desired answer, client relationship, or generator
+   rationale.
 5. **Evaluator cannot edit.** It returns a verdict + required fixes only. It never rewrites the
    artifact. Fixes are applied by a fresh generator/retry worker (WORKER_CONTRACT §3).
 6. **All verdicts logged.** Every eval verdict (per-criterion blocking results, weighted score,

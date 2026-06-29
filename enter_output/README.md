@@ -32,6 +32,7 @@ skills/
     WORKER_CONTRACT.md        # generator vs evaluator roles
     PIPELINE_CONTRACT.md      # canonical 7-stage I/O
     EVAL_WORKER_CONTRACT.md   # mandatory independent evaluation
+    PROMPT_INJECTION_CONTRACT.md # subagent prompt packets and read order
     conventions.md
     verify_contracts.ps1
 
@@ -80,6 +81,19 @@ information, and the reason must be logged in `run_manifest.md`.
 Workers must not inherit full prior conversation history, scratchpads, failed drafts, old run
 folders, raw Reddit dumps, or unrelated Feishu docs. Pass artifacts and handoff packets, not
 conversation context.
+
+## Subagent Prompt Packets
+
+Every generator worker receives a `stage_input_packet` built from that stage's `INPUTS.md`.
+The packet must include a `Role prompt`, `Required instruction files`, optional instruction
+files, business input files, read order, and allowed extra reads. Instruction files are read
+before business inputs. Files not listed in the packet or whitelisted by `INPUTS.md` are
+forbidden.
+
+Project-specific prompt files can be injected only through `run_config.prompt_packs.<stage>`.
+Those prompt files may refine tone, style, and business preferences, but they cannot loosen
+workflow contracts, forbidden reads, schema requirements, fact boundaries, or the independent
+evaluator rule.
 
 ## Evals
 

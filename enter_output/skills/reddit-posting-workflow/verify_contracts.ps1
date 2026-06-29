@@ -55,7 +55,8 @@ $contractFiles = @(
   'CONTEXT_CONTRACT.md',
   'WORKER_CONTRACT.md',
   'PIPELINE_CONTRACT.md',
-  'EVAL_WORKER_CONTRACT.md'
+  'EVAL_WORKER_CONTRACT.md',
+  'PROMPT_INJECTION_CONTRACT.md'
 )
 
 foreach ($file in $contractFiles) {
@@ -68,10 +69,14 @@ Require-Text $readmePath 'enter_output/README.md' @(
   'WORKER_CONTRACT.md',
   'PIPELINE_CONTRACT.md',
   'EVAL_WORKER_CONTRACT.md',
+  'PROMPT_INJECTION_CONTRACT.md',
   'INPUTS.md',
   'OUTPUT_SCHEMA.json',
   'HANDOFF_SCHEMA.json',
   'stage_input_packet',
+  'Role prompt',
+  'Required instruction files',
+  'Business input files',
   'isolated generator worker',
   'isolated evaluator worker',
   'approved `handoff_packet.json`',
@@ -96,7 +101,17 @@ Require-Text (Join-Path $workflowRoot 'WORKER_CONTRACT.md') 'WORKER_CONTRACT.md'
 Require-Text (Join-Path $workflowRoot 'EVAL_WORKER_CONTRACT.md') 'EVAL_WORKER_CONTRACT.md' @(
   'No self-grading',
   'Always launch an evaluator',
-  'Reviewer prompt is mandatory'
+  'Reviewer prompt is mandatory',
+  'PROMPT_INJECTION_CONTRACT.md'
+)
+Require-Text (Join-Path $workflowRoot 'PROMPT_INJECTION_CONTRACT.md') 'PROMPT_INJECTION_CONTRACT.md' @(
+  'stage_input_packet',
+  'instruction_files',
+  'business_inputs',
+  'Read order is binding',
+  'No extra reads by default',
+  'run_config.prompt_packs',
+  'Evaluator prompt packet shape'
 )
 Require-Text (Join-Path $workflowRoot 'PIPELINE_CONTRACT.md') 'PIPELINE_CONTRACT.md' @(
   'product_fact_index.json',
@@ -113,9 +128,17 @@ foreach ($stage in $stageDirs) {
     if (-not (Require-File $path "$stage/$file")) { continue }
     if ($file -eq 'INPUTS.md') {
       Require-Text $path "$stage/INPUTS.md" @(
+        'Agent prompt packet',
+        'Role prompt',
+        'Required instruction files',
+        'Optional instruction files',
+        'Business input files',
+        'Read order',
+        'Allowed extra reads',
         'Allowed global files',
         'Allowed stage files',
-        'Forbidden files'
+        'Forbidden files',
+        'PROMPT_INJECTION_CONTRACT.md'
       )
     } else {
       try {
@@ -134,9 +157,17 @@ foreach ($stage in $stage6SubStageDirs) {
     if (-not (Require-File $path "$stage/$file")) { continue }
     if ($file -eq 'INPUTS.md') {
       Require-Text $path "$stage/INPUTS.md" @(
+        'Agent prompt packet',
+        'Role prompt',
+        'Required instruction files',
+        'Optional instruction files',
+        'Business input files',
+        'Read order',
+        'Allowed extra reads',
         'Allowed global files',
         'Allowed stage files',
-        'Forbidden files'
+        'Forbidden files',
+        'PROMPT_INJECTION_CONTRACT.md'
       )
     } else {
       try {
@@ -166,7 +197,11 @@ foreach ($term in @(
   'WORKER_CONTRACT.md',
   'PIPELINE_CONTRACT.md',
   'EVAL_WORKER_CONTRACT.md',
+  'PROMPT_INJECTION_CONTRACT.md',
   'stage_input_packet',
+  'Role prompt',
+  'Required instruction files',
+  'Business input files',
   'isolated generator worker',
   'isolated evaluator worker',
   'approved handoff packet',
