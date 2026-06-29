@@ -28,27 +28,28 @@ class NoopSearchProjectAdapter:
 
 
 class HttpSearchProjectAdapter:
-    """Configurable adapter for a real search placeholder endpoint.
-
-    The endpoint contract is intentionally minimal because this repository does not include
-    definitive interface docs for placeholder creation.
-    """
+    """SmartContent search-occupancy project adapter from the existing Skill docs."""
 
     def create_placeholder(self, *, run_id: str, run_dir: Path, product_brief_path: Path, config: dict[str, Any]) -> dict[str, Any]:
         settings = config.get("search_project_placeholder", {})
-        url = settings.get("api_url") or os.environ.get(settings.get("api_url_env", "SEARCH_PLACEHOLDER_API_URL"))
-        if not url:
-            raise SearchProjectError("search placeholder API URL is not configured")
-        api_key = os.environ.get(settings.get("api_key_env", "SEARCH_PLACEHOLDER_API_KEY"), "")
+        base_url = (
+            settings.get("base_url")
+            or os.environ.get(settings.get("base_url_env", "SMARTCONTENT_BASE_URL"))
+            or "https://smartcontent.shifenglab.com"
+        ).rstrip("/")
+        url = settings.get("api_url") or f"{base_url}/api/search-occupancy/projects"
+        planner_session = os.environ.get(settings.get("session_env", "PLANNER_SESSION"), "")
+        if not planner_session:
+            raise SearchProjectError("PLANNER_SESSION is required for SmartContent search project creation")
+        product_name = settings.get("name") or config.get("project_name") or config.get("project_id") or "Project"
+        notes = settings.get("notes") or f"Created by reddit workflow runtime. run_id={run_id}"
         payload = {
-            "idempotency_key": run_id,
-            "run_id": run_id,
-            "project": settings.get("project", {}),
-            "product_brief_path": str(product_brief_path),
+            "name": f"{product_name} {run_id}",
+            "product_brief": product_brief_path.read_text(encoding="utf-8"),
+            "notes": notes,
         }
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
-        if api_key:
-            headers["Authorization"] = "Bearer " + api_key
+        headers["Cookie"] = f"planner_session={planner_session}"
         request = urllib.request.Request(
             url,
             data=json.dumps(payload).encode("utf-8"),
@@ -60,7 +61,7 @@ class HttpSearchProjectAdapter:
                 return json.loads(response.read().decode("utf-8"))
         except urllib.error.HTTPError as exc:
             body = exc.read().decode("utf-8", errors="replace")
-            raise SearchProjectError(f"search placeholder API error {exc.code}: {_redact(api_key, body)}") from exc
+            raise SearchProjectError(f"search placeholder API error {exc.code}: {_redact(planner_session, body)}") from exc
         except urllib.error.URLError as exc:
             raise SearchProjectError(f"search placeholder API connection failed: {exc.reason}") from exc
 

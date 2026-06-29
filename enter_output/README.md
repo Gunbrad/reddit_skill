@@ -154,7 +154,7 @@ $env:DEEPSEEK_MODEL = "deepseek-v4-flash"
 Dry run without model spend:
 
 ```powershell
-python enter_output\pipeline.py start --provider mock --config enter_output\live_run\run_config.json --run-id mock_full
+python enter_output\pipeline.py start --provider mock --config enter_output\live_run\run_config.json
 ```
 
 OpenAI-compatible provider for future GPT-compatible gateways:
@@ -174,8 +174,19 @@ Other providers can be added by implementing `ModelClient.complete()` in
 Start a run:
 
 ```powershell
-python enter_output\pipeline.py start --config enter_output\live_run\run_config.json --run-id enter_001 --provider deepseek
+python enter_output\pipeline.py start --config enter_output\live_run\run_config.json --provider deepseek
 ```
+
+By default, every `start` creates a fresh run folder beside `enter_output/`:
+
+```text
+temp_output/YYYYMMDD_HHMMSS_project-name/
+```
+
+For example, running project `hoto` twice creates two different folders such as
+`temp_output/20260629_153000_hoto/` and `temp_output/20260629_153015_hoto/`. If you need a
+stable name for a manual debug run, pass `--run-id`; otherwise omit it so normal runs never
+reuse a previous project folder.
 
 Resume a paused or failed run:
 
@@ -192,11 +203,11 @@ python enter_output\pipeline.py rerun-stage --run-id enter_001 --stage topic-car
 Limit stages for a smoke test:
 
 ```powershell
-python enter_output\pipeline.py start --provider mock --config enter_output\live_run\run_config.json --run-id smoke_001 --stages product-research,topic-selection
+python enter_output\pipeline.py start --provider mock --config enter_output\live_run\run_config.json --stages product-research,topic-selection
 ```
 
 Stdout is one short JSON status object. Detailed responses, candidates, evals, manifests, and
-approved artifacts are written under `enter_output/runs/{run_id}/`.
+approved artifacts are written under `temp_output/{run_id}/`.
 
 ### Run artifacts
 
@@ -257,17 +268,28 @@ JSON containing the document id and URL to `result_file`, then runs `resume`.
 ### Search placeholder project
 
 Optional search placeholder creation is enabled only after `product-research` has passed
-schema and eval:
+schema and eval. This uses the SmartContent contract already documented in
+`skills/search-query-occupancy/api-reference.md`:
+
+- Base URL: `https://smartcontent.shifenglab.com`
+- Auth: `Cookie: planner_session=<PLANNER_SESSION>`
+- Endpoint: `POST /api/search-occupancy/projects`
+- Body: `{name, product_brief, notes}`
+
+Environment:
+
+```powershell
+$env:PLANNER_SESSION = "..."
+```
+
+Run config:
 
 ```json
 {
   "search_project_placeholder": {
     "enabled": true,
-    "api_url_env": "SEARCH_PLACEHOLDER_API_URL",
-    "api_key_env": "SEARCH_PLACEHOLDER_API_KEY",
-    "project": {
-      "type": "search_occupancy_placeholder"
-    }
+    "base_url_env": "SMARTCONTENT_BASE_URL",
+    "session_env": "PLANNER_SESSION"
   }
 }
 ```

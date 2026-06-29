@@ -1,11 +1,12 @@
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
-from enter_output.runtime.external_actions import SearchProjectError, create_action_manifest
+from enter_output.runtime.external_actions import HttpSearchProjectAdapter, SearchProjectError, create_action_manifest
 from enter_output.runtime.model_client import ScriptedModelClient, example_from_schema
 from enter_output.runtime.runner import PipelineRunner, RunOptions
 
@@ -264,6 +265,54 @@ def test_successful_run_saves_all_artifact_layers_and_uses_independent_requests(
     assert "Full prior conversation history." in manifest["forbidden_files"]
 
 
+def test_start_without_run_id_creates_timestamped_project_folder_in_temp_output(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path, ["alpha"])
+    config_path = repo / "run_config.json"
+    write_json(config_path, {"project_name": "hoto", "project_id": "ignored-id"})
+    client = ScriptedModelClient([generator_payload("alpha", "01_alpha/main.md"), eval_payload("pass")])
+    runner = PipelineRunner(
+        repo_root=repo,
+        runs_root=repo / "temp_output",
+        model_client=client,
+        options=RunOptions(stage_order=["alpha"], max_retries=0),
+    )
+
+    status = runner.start(config_path)
+
+    assert status["status"] == "completed"
+    run_dir = Path(status["run_dir"])
+    assert run_dir.parent == repo / "temp_output"
+    assert re.match(r"^\d{8}_\d{6}_hoto(?:_\d{2})?$", run_dir.name)
+    assert not (repo / "enter_output" / "runs").exists()
+
+
+def test_repeated_start_without_run_id_creates_distinct_project_folders(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path, ["alpha"])
+    config_path = repo / "run_config.json"
+    write_json(config_path, {"project_name": "hoto"})
+    client = ScriptedModelClient(
+        [
+            generator_payload("alpha", "01_alpha/main.md"),
+            eval_payload("pass"),
+            generator_payload("alpha", "01_alpha/main.md"),
+            eval_payload("pass"),
+        ]
+    )
+    runner = PipelineRunner(
+        repo_root=repo,
+        runs_root=repo / "temp_output",
+        model_client=client,
+        options=RunOptions(stage_order=["alpha"], max_retries=0),
+    )
+
+    first = runner.start(config_path)
+    second = runner.start(config_path)
+
+    assert Path(first["run_dir"]).parent == repo / "temp_output"
+    assert Path(second["run_dir"]).parent == repo / "temp_output"
+    assert first["run_id"] != second["run_id"]
+
+
 def test_schema_failure_blocks_next_stage_and_skips_evaluator(tmp_path: Path) -> None:
     repo = make_repo(tmp_path, ["alpha", "beta"])
     bad_payload = generator_payload("alpha", "01_alpha/main.md")
@@ -456,6 +505,49 @@ class FlakySearchProjectAdapter:
         if self.calls == 1:
             raise SearchProjectError("temporary outage")
         return {"project_id": "search-project-1", "status": "created", "idempotency_key": run_id}
+
+
+def test_smartcontent_search_project_adapter_uses_skill_api_contract(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    captured = {}
+    product_brief = tmp_path / "product_brief.md"
+    product_brief.write_text("# Hoto brief\n", encoding="utf-8")
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+        def read(self):
+            return json.dumps({"project_id": "hoto-20260629", "status": "created"}).encode("utf-8")
+
+    def fake_urlopen(request, timeout):
+        captured["url"] = request.full_url
+        captured["headers"] = dict(request.header_items())
+        captured["body"] = json.loads(request.data.decode("utf-8"))
+        captured["timeout"] = timeout
+        return FakeResponse()
+
+    monkeypatch.setenv("PLANNER_SESSION", "session-token")
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    receipt = HttpSearchProjectAdapter().create_placeholder(
+        run_id="20260629_120000_hoto",
+        run_dir=tmp_path,
+        product_brief_path=product_brief,
+        config={"project_name": "Hoto"},
+    )
+
+    assert captured["url"] == "https://smartcontent.shifenglab.com/api/search-occupancy/projects"
+    assert captured["headers"]["Cookie"] == "planner_session=session-token"
+    assert captured["headers"]["Accept"] == "application/json"
+    assert captured["body"] == {
+        "name": "Hoto 20260629_120000_hoto",
+        "product_brief": "# Hoto brief\n",
+        "notes": "Created by reddit workflow runtime. run_id=20260629_120000_hoto",
+    }
+    assert receipt["project_id"] == "hoto-20260629"
 
 
 def test_search_project_failure_does_not_regenerate_stage_one_on_resume(tmp_path: Path) -> None:

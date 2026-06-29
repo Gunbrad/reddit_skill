@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -78,9 +79,9 @@ class PipelineRunner:
 
     def start(self, config_path: Path, *, run_id: str | None = None) -> dict[str, Any]:
         config_path = Path(config_path)
+        config = read_json(config_path)
         if run_id is None:
-            config = read_json(config_path)
-            run_id = config.get("run_id") or config.get("project_id") or "run"
+            run_id = self._new_run_id(config)
         run_dir = self.runs_root / run_id
         config = copy_config(config_path, run_dir)
         state = self._load_or_create_state(run_id, run_dir, config)
@@ -504,6 +505,16 @@ class PipelineRunner:
     def _save_state(self, run_dir: Path, state: dict[str, Any]) -> None:
         write_json(run_dir / "run_state.json", state)
 
+    def _new_run_id(self, config: dict[str, Any]) -> str:
+        project_name = config.get("project_name") or config.get("project_id") or "project"
+        base = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + _slugify(str(project_name))
+        candidate = base
+        suffix = 2
+        while (self.runs_root / candidate).exists():
+            candidate = f"{base}_{suffix:02d}"
+            suffix += 1
+        return candidate
+
 
 def parse_model_json(content: str) -> dict[str, Any]:
     stripped = content.strip()
@@ -562,3 +573,8 @@ def _load_6a_viral_intent(stage_dir: Path) -> list[dict[str, Any]]:
     outputs = read_json(handoff_path).get("outputs", {})
     value = outputs.get("viral_intent_preservation", [])
     return value if isinstance(value, list) else []
+
+
+def _slugify(value: str) -> str:
+    slug = re.sub(r"[^A-Za-z0-9_-]+", "-", value.strip().lower()).strip("-_")
+    return slug or "project"

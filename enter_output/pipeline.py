@@ -18,7 +18,7 @@ def main() -> int:
 
     start = subparsers.add_parser("start", help="Create and start a run")
     start.add_argument("--config", required=True, help="Path to run_config.json")
-    start.add_argument("--run-id", help="Stable run id. Defaults to config run_id/project_id.")
+    start.add_argument("--run-id", help="Optional explicit run id; default is timestamp_project-name.")
     start.add_argument("--provider", default="deepseek", help="Model provider: deepseek, mock, openai-compatible")
     start.add_argument("--max-retries", type=int, default=5)
     start.add_argument("--stages", help="Comma-separated stage override for testing or reruns")
@@ -42,7 +42,7 @@ def main() -> int:
     client = create_model_client(args.provider)
     runner = PipelineRunner(
         repo_root=repo_root,
-        runs_root=repo_root / "enter_output" / "runs",
+        runs_root=repo_root / "temp_output",
         model_client=client,
         options=RunOptions(stage_order=stages, max_retries=args.max_retries),
     )
