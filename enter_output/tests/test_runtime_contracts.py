@@ -8,6 +8,7 @@ import pytest
 
 from enter_output.runtime.external_actions import HttpSearchProjectAdapter, SearchProjectError, create_action_manifest
 from enter_output.runtime.model_client import ScriptedModelClient, example_from_schema
+from enter_output.runtime.prompt_builder import PromptBuilder
 from enter_output.runtime.runner import PipelineRunner, RunOptions
 
 
@@ -144,6 +145,52 @@ Read in order:
     )
 
 
+def write_eval_inputs(repo: Path, name: str, business_lines: list[str]) -> None:
+    business_inputs = "\n".join(business_lines)
+    write_text(
+        repo / "enter_output" / "skills" / name / "EVAL_INPUTS.md",
+        f"""# Eval Inputs - {name}
+
+## Evaluator prompt packet
+
+### Role prompt
+
+Run the Reviewer prompt from EVALS.md as an independent evaluator.
+
+### Required instruction files
+
+1. `repo:enter_output/skills/reddit-posting-workflow/EVAL_WORKER_CONTRACT.md`
+2. `repo:enter_output/skills/{name}/EVALS.md`
+3. `repo:enter_output/skills/{name}/OUTPUT_SCHEMA.json`
+4. `repo:enter_output/skills/{name}/HANDOFF_SCHEMA.json`
+
+### Business input files
+
+{business_inputs}
+
+### Read order
+
+1. Required instruction files.
+2. Artifact under review.
+3. Minimal fact / brand context.
+4. Stage-specific upstream context.
+
+### Allowed extra reads
+
+- None by default.
+
+### Forbidden files
+
+- Full prior conversation history.
+- Previous stage scratchpads.
+- Failed drafts unless passed in retry failure report.
+- Unrelated run folders.
+- Old Feishu docs.
+- Raw Reddit dumps unless explicitly produced by current run and listed above.
+""",
+    )
+
+
 def write_post_optimization_schema(repo: Path) -> None:
     stage = repo / "enter_output" / "skills" / "post-optimization"
     write_text(stage / "SKILL.md", "# post optimization\n")
@@ -263,6 +310,111 @@ def test_successful_run_saves_all_artifact_layers_and_uses_independent_requests(
     manifest = json.loads((run_dir / "01_alpha" / "input_manifest.json").read_text(encoding="utf-8"))
     assert manifest["business_inputs"] == [{"path": "run:run_config.json", "purpose": "business input"}]
     assert "Full prior conversation history." in manifest["forbidden_files"]
+
+
+def test_evaluator_uses_eval_inputs_md_when_present(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path, ["alpha"])
+    write_eval_inputs(repo, "alpha", ["- `run:eval_context/extra.md`"])
+    run_dir = repo / "enter_output" / "runs" / "run_eval_inputs"
+    write_text(run_dir / "eval_context" / "extra.md", "# extra eval context\n")
+    client = ScriptedModelClient([generator_payload("alpha", "01_alpha/main.md"), eval_payload("pass")])
+    runner = make_runner(repo, client, ["alpha"], max_retries=0)
+
+    status = runner.start(repo / "run_config.json", run_id="run_eval_inputs")
+
+    assert status["status"] == "completed"
+    manifest = json.loads((run_dir / "01_alpha" / "runtime" / "attempt_001" / "eval_input_manifest.json").read_text(encoding="utf-8"))
+    assert {"path": "run:eval_context/extra.md", "purpose": "business input"} in manifest["business_inputs"]
+    eval_paths = [item["path"] for item in manifest["business_inputs"]]
+    assert "run:01_alpha/main.md" in eval_paths
+    assert all("generator_raw_response" not in path for path in eval_paths)
+    assert all("candidate_handoff_packet" not in path for path in eval_paths)
+
+
+def test_stage_6a_eval_receives_stage5_handoff(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path, ["post-native-rewrite"])
+    write_stage(repo, "post-native-rewrite", "stage_post_native_rewrite", "06_optimized/native_posts.md")
+    write_eval_inputs(repo, "post-native-rewrite", ["- `run:05_optimized_cards/handoff_packet.json`"])
+    run_dir = repo / "enter_output" / "runs" / "run_6a_eval"
+    write_json(run_dir / "05_optimized_cards" / "handoff_packet.json", {"stage_id": "stage_5_topic_card_optimization"})
+    client = ScriptedModelClient(
+        [generator_payload("post-native-rewrite", "06_optimized/native_posts.md"), eval_payload("pass")]
+    )
+    runner = make_runner(repo, client, ["post-native-rewrite"], max_retries=0)
+
+    status = runner.start(repo / "run_config.json", run_id="run_6a_eval")
+
+    assert status["status"] == "completed"
+    manifest = json.loads((run_dir / "06_optimized" / "runtime" / "attempt_001" / "eval_input_manifest.json").read_text(encoding="utf-8"))
+    assert "run:05_optimized_cards/handoff_packet.json" in [item["path"] for item in manifest["business_inputs"]]
+
+
+def test_missing_required_eval_input_fails_before_evaluator_request(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path, ["alpha"])
+    write_eval_inputs(repo, "alpha", ["- `run:eval_context/missing.md`"])
+    client = ScriptedModelClient([generator_payload("alpha", "01_alpha/main.md")])
+    runner = make_runner(repo, client, ["alpha"], max_retries=0)
+
+    status = runner.start(repo / "run_config.json", run_id="run_missing_eval_input")
+
+    assert status["status"] == "failed"
+    assert status["reason"] == "missing_eval_input"
+    assert status["details"]["missing"] == ["run:eval_context/missing.md"]
+    assert [call["kind"] for call in client.calls] == ["generator"]
+
+
+def test_eval_inputs_optional_missing_is_skipped(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path, ["alpha"])
+    write_eval_inputs(repo, "alpha", ["- `run:eval_context/optional.md` if present."])
+    client = ScriptedModelClient([generator_payload("alpha", "01_alpha/main.md"), eval_payload("pass")])
+    runner = make_runner(repo, client, ["alpha"], max_retries=0)
+
+    status = runner.start(repo / "run_config.json", run_id="run_optional_eval_input")
+
+    assert status["status"] == "completed"
+    assert [call["kind"] for call in client.calls] == ["generator", "evaluator"]
+    manifest = json.loads(
+        (
+            repo
+            / "enter_output"
+            / "runs"
+            / "run_optional_eval_input"
+            / "01_alpha"
+            / "runtime"
+            / "attempt_001"
+            / "eval_input_manifest.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert {"path": "run:eval_context/optional.md", "purpose": "business input", "optional": True} in manifest["business_inputs"]
+
+
+def test_product_research_and_6b_inputs_have_standard_prompt_packet(tmp_path: Path) -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    run_dir = tmp_path / "run"
+    builder = PromptBuilder(repo_root)
+
+    product_packet = builder.build_generator_packet(
+        builder.load_stage("product-research"),
+        run_dir,
+        {"prompt_packs": {}},
+    )
+    product_business_paths = [item["path"] for item in product_packet["business_inputs"]]
+    assert product_packet["role_prompt"]
+    assert product_packet["instruction_files"]
+    assert "run:run_config.json" in product_business_paths
+    assert "run_config.product_sources" in product_business_paths
+    assert "run_config.provided_artifacts" in product_business_paths
+
+    fact_packet = builder.build_generator_packet(
+        builder.load_stage("post-fact-brand-check"),
+        run_dir,
+        {"prompt_packs": {}},
+    )
+    fact_business = {item["path"]: item for item in fact_packet["business_inputs"]}
+    assert fact_packet["role_prompt"]
+    assert fact_packet["instruction_files"]
+    assert "run:06_optimized/native_posts.md" in fact_business
+    assert fact_business["run:06_optimized/6a_handoff_packet.json"].get("optional") is not True
 
 
 def test_start_without_run_id_creates_timestamped_project_folder_in_temp_output(tmp_path: Path) -> None:
@@ -640,6 +792,24 @@ def test_stage_registry_declares_canonical_stage_order_and_outputs() -> None:
         "03_search/handoff_packet.json",
     ]
     assert search_stage["requires_host_action"] is False
+    screen_stage = next(stage for stage in registry["stages"] if stage["name"] == "topic-card-selection")
+    assert screen_stage["output_dir"] == "04_screen"
+    assert screen_stage["outputs"] == [
+        "04_screen/screening.md",
+        "04_screen/passed_cards.json",
+        "04_screen/handoff_packet.json",
+    ]
+    optimize_stage = next(stage for stage in registry["stages"] if stage["name"] == "topic-card-optimization")
+    assert "04_screen/handoff_packet.json" in optimize_stage["inputs"]
+
+
+def test_registry_stages_have_eval_inputs_md() -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    registry = json.loads((repo_root / "enter_output" / "runtime" / "stage_registry.json").read_text(encoding="utf-8"))
+
+    for stage in registry["stages"]:
+        eval_inputs = repo_root / "enter_output" / "skills" / stage["name"] / "EVAL_INPUTS.md"
+        assert eval_inputs.exists(), f"missing EVAL_INPUTS.md for {stage['name']}"
 
 
 def test_run_stage_script_supports_single_stage_range_resume_and_feishu_url_help() -> None:
@@ -681,6 +851,36 @@ def test_run_stage_single_stage_cli_runs_only_requested_stage(tmp_path: Path) ->
     assert [call["stage"] for call in client.calls] == ["beta", "beta"]
     assert not (repo / "enter_output" / "runs" / "single_beta" / "01_alpha").exists()
     assert (repo / "enter_output" / "runs" / "single_beta" / "02_beta" / "handoff_packet.json").exists()
+
+
+def test_single_stage_feishu_url_writes_config(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path, ["alpha", "feishu-formatting"])
+    config_path = repo / "run_config.json"
+    client = ScriptedModelClient(
+        [generator_payload("feishu-formatting", "02_feishu-formatting/main.md"), eval_payload("pass")]
+    )
+
+    from enter_output.runtime.run_stage import run_with_client
+
+    status = run_with_client(
+        repo_root=repo,
+        model_client=client,
+        stage="feishu-formatting",
+        run_dir=repo / "enter_output" / "runs" / "single_feishu",
+        config_path=config_path,
+        feishu_url="https://example.feishu.cn/docx/test",
+        max_retries=0,
+    )
+
+    assert status["status"] == "completed"
+    written_config = json.loads(
+        (repo / "enter_output" / "runs" / "single_feishu" / "run_config.json").read_text(encoding="utf-8")
+    )
+    assert written_config["feishu_url"] == "https://example.feishu.cn/docx/test"
+    assert written_config["single_stage_mode"] is True
+    assert written_config["source_mode"] == "feishu_url"
+    assert [call["stage"] for call in client.calls] == ["feishu-formatting", "feishu-formatting"]
+    assert not (repo / "enter_output" / "runs" / "single_feishu" / "01_alpha").exists()
 
 
 def test_run_stage_range_cli_stops_at_to_stage(tmp_path: Path) -> None:

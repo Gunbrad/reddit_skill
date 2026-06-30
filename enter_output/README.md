@@ -98,8 +98,9 @@ evaluator rule.
 ## Evals
 
 Every stage artifact must be evaluated by a separate evaluator worker. The generator cannot
-pass its own work. Evaluators receive only the artifact, `EVALS.md`, `OUTPUT_SCHEMA.json`, and
-minimal fact/brand context.
+pass its own work. Evaluators receive the artifact under review plus the stage's
+`EVAL_INPUTS.md` packet: `EVALS.md`, `OUTPUT_SCHEMA.json`, `HANDOFF_SCHEMA.json`, minimal
+fact/brand context, and any explicitly declared stage-specific upstream context.
 
 Stage 6a has a blocking "Viral intent preserved" rule: final title/body/comment design must
 preserve Stage 5 handoff values for `core_hook`, `emotional_trigger`, `comment_engine`, and
@@ -181,6 +182,42 @@ python enter_output\runtime\run_stage.py --stage feishu-formatting --feishu-url 
 python enter_output\runtime\run_stage.py --stage post-native-rewrite --feishu-url "https://..." --run-dir temp_output\native_001 --provider deepseek
 ```
 
+### User Intent Routing / Single-stage Mode
+
+The host conversation is responsible for recognizing the user's intent. The runtime is
+responsible for executing exactly the selected stage or range and for keeping context isolated.
+Do not force a full pipeline when the user asked for one step.
+
+Common routes:
+
+- Product research only:
+  `python enter_output\runtime\run_stage.py --stage product-research --run-dir temp_output\research_001 --provider deepseek`
+- Topic selection only, when product brief and global files already exist:
+  `python enter_output\runtime\run_stage.py --stage topic-selection --run-dir temp_output\topics_001 --provider deepseek`
+- Product research through topic selection, when upstream artifacts do not exist yet:
+  `python enter_output\runtime\run_stage.py --from product-research --to topic-selection --run-dir temp_output\topics_001 --provider deepseek`
+- Feishu formatting from a Feishu URL:
+  `python enter_output\runtime\run_stage.py --stage feishu-formatting --feishu-url "https://..." --run-dir temp_output\format_001 --provider deepseek`
+- Native rewrite from a Feishu URL:
+  `python enter_output\runtime\run_stage.py --stage post-native-rewrite --feishu-url "https://..." --run-dir temp_output\native_001 --provider deepseek`
+- Fact / brand check only:
+  `python enter_output\runtime\run_stage.py --stage post-fact-brand-check --run-dir temp_output\fact_001 --provider deepseek`
+- Subreddit and image packaging only:
+  `python enter_output\runtime\run_stage.py --stage post-subreddit-image --run-dir temp_output\package_001 --provider deepseek`
+
+When `--feishu-url` is passed, the runtime writes it into `run_config.json` with
+`single_stage_mode: true` and `source_mode: "feishu_url"`. For stages that need the Feishu
+document body (`post-native-rewrite`, `post-feishu-publish`, `feishu-formatting`), Python does
+not pretend it has read the document. If the required local source artifact is missing, the run
+must either fail clearly with the missing run-relative path or pause through a `host_actions`
+manifest so the host can read Feishu with `lark-cli` and write the result back into the current
+run folder.
+
+If a single stage is missing an upstream artifact, the runtime returns a clear failure such as
+`upstream_artifact_missing` or `missing_eval_input`. It must not silently read old conversation
+history, unrelated run folders, old Feishu docs, generator raw responses, scratchpads, or failed
+drafts.
+
 Each stage folder also has a lightweight wrapper such as
 `skills/topic-selection/run_topic_selection.py`. Wrappers do not contain stage logic; they only
 delegate to `runtime/run_stage.py`.
@@ -231,6 +268,7 @@ For each stage, the runtime writes:
 - `{stage_dir}/runtime/attempt_001/generator_raw_response.json`
 - `{stage_dir}/runtime/attempt_001/candidate_output.json`
 - `{stage_dir}/runtime/attempt_001/candidate_handoff_packet.json`
+- `{stage_dir}/runtime/attempt_001/eval_input_manifest.json`
 - `{stage_dir}/runtime/attempt_001/eval_raw_response.json`
 - `{stage_dir}/runtime/attempt_001/eval_result.json`
 - `{stage_dir}/approved_output.json`

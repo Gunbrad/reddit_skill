@@ -153,6 +153,10 @@ class PipelineRunner:
                 return self._fail_stage(state, stage, "artifact_write_failed", result)
             if result["status"] == "artifact_missing":
                 return self._fail_stage(state, stage, "artifact_missing", result)
+            if result["status"] == "missing_eval_instruction_file":
+                return self._fail_stage(state, stage, "missing_eval_instruction_file", result)
+            if result["status"] == "missing_eval_input":
+                return self._fail_stage(state, stage, "missing_eval_input", result)
             if result["status"] == "eval_passed":
                 approved = self._approve_stage(spec, run_dir, packet, result)
                 state["stages"][stage] = {
@@ -234,6 +238,12 @@ class PipelineRunner:
         artifact_paths = sorted(declared_paths(output))
         eval_packet = self.prompt_builder.build_evaluator_packet(spec, run_dir, artifact_paths)
         write_json(runtime_dir / "eval_input_manifest.json", eval_packet)
+        missing_eval_instructions = self.prompt_builder.missing_mandatory_files(eval_packet, run_dir)
+        if missing_eval_instructions:
+            return {"status": "missing_eval_instruction_file", "missing": missing_eval_instructions}
+        missing_eval_inputs = self.prompt_builder.missing_business_inputs(eval_packet, run_dir)
+        if missing_eval_inputs:
+            return {"status": "missing_eval_input", "missing": missing_eval_inputs}
         evaluator_response = self.model_client.complete(
             self.prompt_builder.messages_for_packet(eval_packet, run_dir),
             kind="evaluator",
@@ -429,24 +439,7 @@ class PipelineRunner:
         return {"status": "failed", "stage": stage, "reason": reason, "details": details}
 
     def _missing_business_inputs(self, packet: dict[str, Any], run_dir: Path) -> list[str]:
-        missing: list[str] = []
-        for ref in packet.get("business_inputs", []):
-            if ref.get("optional"):
-                continue
-            path_ref = ref.get("path", "")
-            if not path_ref.startswith("run:"):
-                continue
-            relative = path_ref.removeprefix("run:")
-            if relative == "run_config.json":
-                continue
-            if "{" in relative and "}" in relative:
-                glob_pattern = re.sub(r"\{[^}]+\}", "*", relative)
-                if not list(run_dir.glob(glob_pattern)):
-                    missing.append(path_ref)
-                continue
-            if not (run_dir / relative).exists():
-                missing.append(path_ref)
-        return missing
+        return self.prompt_builder.missing_business_inputs(packet, run_dir)
 
     def _write_stage_six_coordinator_handoff(self, run_dir: Path) -> None:
         coordinator_dir = self.repo_root / "enter_output" / "skills" / "post-optimization"

@@ -53,6 +53,32 @@ Prompt files injected into a worker refine style and business judgment only. The
 override `INPUTS.md` forbidden reads, fact boundaries, schemas, secret handling, handoff
 rules, or the separate evaluator requirement.
 
+## User Intent Routing / Single-stage Mode
+
+The main conversation routes the user's intent. The runtime executes the selected stage or
+stage range and enforces context isolation. Do not run the whole pipeline when the user asks for
+one step.
+
+Use these routes:
+
+- Product research only: `run_stage.py --stage product-research`
+- Topic selection only with existing Stage 1 artifacts: `run_stage.py --stage topic-selection`
+- Topic selection without upstream artifacts: `run_stage.py --from product-research --to topic-selection`
+- Feishu formatting from a link: `run_stage.py --stage feishu-formatting --feishu-url "..."`
+- Native rewrite from a Feishu link: `run_stage.py --stage post-native-rewrite --feishu-url "..."`
+- Fact / brand check only: `run_stage.py --stage post-fact-brand-check`
+- Subreddit and image packaging only: `run_stage.py --stage post-subreddit-image`
+
+When `--feishu-url` is present, the runtime records `feishu_url`, `single_stage_mode: true`,
+and `source_mode: "feishu_url"` in `run_config.json`. If a stage needs the Feishu document body
+and the runtime cannot read it directly, the generator must request a host action and pause
+instead of pretending the content was available. The host reads Feishu, writes the result into
+the current run folder, and resumes.
+
+If a selected stage lacks required upstream artifacts, return a clear missing-file failure.
+Never satisfy the stage by reading full prior conversation history, unrelated run folders, old
+Feishu docs, generator raw responses, scratchpads, or failed drafts.
+
 ## Canonical Stages
 
 | Stage | Skill | Canonical output |

@@ -20,6 +20,7 @@ class StageSpec:
     stage_id: str
     skill_dir: Path
     inputs_path: Path
+    eval_inputs_path: Path
     skill_path: Path
     evals_path: Path
     output_schema_path: Path
@@ -45,6 +46,7 @@ class PromptBuilder:
             stage_id=stage_id,
             skill_dir=skill_dir,
             inputs_path=skill_dir / "INPUTS.md",
+            eval_inputs_path=skill_dir / "EVAL_INPUTS.md",
             skill_path=skill_dir / "SKILL.md",
             evals_path=skill_dir / "EVALS.md",
             output_schema_path=skill_dir / "OUTPUT_SCHEMA.json",
@@ -65,14 +67,7 @@ class PromptBuilder:
         business_inputs = []
         for item, source_line in _path_items_with_source(_section_text(text, "### Business input files")):
             ref = {"path": item, "purpose": "business input"}
-            lowered = source_line.lower()
-            if (
-                "only when" in lowered
-                or "if present" in lowered
-                or "if written by" in lowered
-                or " when " in lowered
-                or " only to " in lowered
-            ):
+            if _is_optional_reference_line(source_line):
                 ref["optional"] = True
             business_inputs.append(ref)
         packet = {
@@ -96,12 +91,37 @@ class PromptBuilder:
 
     def build_evaluator_packet(self, spec: StageSpec, run_dir: Path, artifact_paths: list[str]) -> dict[str, Any]:
         business_inputs = [{"path": f"run:{path}", "purpose": "artifact under review"} for path in artifact_paths]
+        if spec.eval_inputs_path.exists():
+            text = spec.eval_inputs_path.read_text(encoding="utf-8")
+            instruction_files = [
+                {"path": item, "mandatory": True}
+                for item in _path_items(_section_text(text, "### Required instruction files"))
+            ]
+            instruction_files.extend(
+                {"path": item, "mandatory": False}
+                for item in _path_items(_section_text(text, "### Optional instruction files"))
+            )
+            return {
+                "worker_role": "evaluator",
+                "stage": spec.name,
+                "stage_id": spec.stage_id,
+                "run_folder": str(run_dir),
+                "role_prompt": _section_text(text, "### Role prompt")
+                or "Run the Reviewer prompt from EVALS.md as an independent evaluator.",
+                "instruction_files": instruction_files or _default_eval_instruction_files(spec),
+                "business_inputs": _dedupe_file_refs(
+                    business_inputs + _business_input_refs(_section_text(text, "### Business input files"))
+                ),
+                "read_order": _list_items(_section_text(text, "### Read order")),
+                "blind_eval": True,
+                "allowed_extra_reads": _list_items(_section_text(text, "### Allowed extra reads")),
+                "forbidden_files": _list_items(_section_text(text, "### Forbidden files")),
+                "output_schema": f"repo:enter_output/skills/{spec.name}/OUTPUT_SCHEMA.json",
+                "handoff_schema": f"repo:enter_output/skills/{spec.name}/HANDOFF_SCHEMA.json",
+                "evals": f"repo:enter_output/skills/{spec.name}/EVALS.md",
+            }
         minimal_context = []
-        for ref in [
-            "run:global/product_fact_index.json",
-            "run:global/claim_boundary_table.json",
-            "run:global/brand_safety_rules.md",
-        ]:
+        for ref in _default_minimal_eval_context():
             if self.resolve_ref(ref, run_dir).exists():
                 minimal_context.append({"path": ref, "purpose": "minimal fact/brand context", "optional": True})
         return {
@@ -110,15 +130,7 @@ class PromptBuilder:
             "stage_id": spec.stage_id,
             "run_folder": str(run_dir),
             "role_prompt": "Run the Reviewer prompt from EVALS.md as an independent evaluator.",
-            "instruction_files": [
-                {
-                    "path": "repo:enter_output/skills/reddit-posting-workflow/EVAL_WORKER_CONTRACT.md",
-                    "mandatory": True,
-                },
-                {"path": f"repo:enter_output/skills/{spec.name}/EVALS.md", "mandatory": True},
-                {"path": f"repo:enter_output/skills/{spec.name}/OUTPUT_SCHEMA.json", "mandatory": True},
-                {"path": f"repo:enter_output/skills/{spec.name}/HANDOFF_SCHEMA.json", "mandatory": True},
-            ],
+            "instruction_files": _default_eval_instruction_files(spec),
             "business_inputs": business_inputs + minimal_context,
             "blind_eval": True,
             "allowed_extra_reads": [],
@@ -165,6 +177,26 @@ class PromptBuilder:
                 missing.append(ref["path"])
         return missing
 
+    def missing_business_inputs(self, packet: dict[str, Any], run_dir: Path) -> list[str]:
+        missing: list[str] = []
+        for ref in packet.get("business_inputs", []):
+            if ref.get("optional") or ref.get("mandatory") is False:
+                continue
+            path_ref = ref.get("path", "")
+            if not path_ref.startswith("run:"):
+                continue
+            relative = path_ref.removeprefix("run:")
+            if relative == "run_config.json":
+                continue
+            if "{" in relative and "}" in relative:
+                glob_pattern = re.sub(r"\{[^}]+\}", "*", relative)
+                if not list(run_dir.glob(glob_pattern)):
+                    missing.append(path_ref)
+                continue
+            if not (run_dir / relative).exists():
+                missing.append(path_ref)
+        return missing
+
     def resolve_ref(self, ref: str, run_dir: Path) -> Path | None:
         if ref.startswith("repo:"):
             return self.repo_root / ref.removeprefix("repo:")
@@ -204,8 +236,7 @@ def _path_items(section: str) -> list[str]:
 def _path_items_with_source(section: str) -> list[tuple[str, str]]:
     items: list[str] = []
     for line in section.splitlines():
-        match = re.search(r"`([^`]+)`", line)
-        if match:
+        for match in re.finditer(r"`([^`]+)`", line):
             item = match.group(1).strip()
             if _looks_like_ref(item):
                 items.append((item, line.strip()))
@@ -232,6 +263,66 @@ def _optional_instruction_files(run_config: dict[str, Any], stage: str) -> list[
     stage_pack = prompt_packs.get(stage, {})
     refs = stage_pack.get("extra_instruction_files", [])
     return [{"path": ref, "mandatory": True} for ref in refs]
+
+
+def _business_input_refs(section: str) -> list[dict[str, Any]]:
+    refs: list[dict[str, Any]] = []
+    for item, source_line in _path_items_with_source(section):
+        ref: dict[str, Any] = {"path": item, "purpose": "business input"}
+        if _is_optional_reference_line(source_line):
+            ref["optional"] = True
+        refs.append(ref)
+    return refs
+
+
+def _is_optional_reference_line(source_line: str) -> bool:
+    lowered = source_line.lower()
+    return (
+        "optional" in lowered
+        or "only when" in lowered
+        or "if present" in lowered
+        or "if written by" in lowered
+        or "if runtime" in lowered
+        or " when " in lowered
+        or " only to " in lowered
+    )
+
+
+def _default_eval_instruction_files(spec: StageSpec) -> list[dict[str, Any]]:
+    return [
+        {
+            "path": "repo:enter_output/skills/reddit-posting-workflow/EVAL_WORKER_CONTRACT.md",
+            "mandatory": True,
+        },
+        {"path": f"repo:enter_output/skills/{spec.name}/EVALS.md", "mandatory": True},
+        {"path": f"repo:enter_output/skills/{spec.name}/OUTPUT_SCHEMA.json", "mandatory": True},
+        {"path": f"repo:enter_output/skills/{spec.name}/HANDOFF_SCHEMA.json", "mandatory": True},
+    ]
+
+
+def _default_minimal_eval_context() -> list[str]:
+    return [
+        "run:global/product_fact_index.json",
+        "run:global/claim_boundary_table.json",
+        "run:global/brand_safety_rules.md",
+    ]
+
+
+def _dedupe_file_refs(refs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    by_path: dict[str, dict[str, Any]] = {}
+    for ref in refs:
+        path = ref.get("path")
+        if not path:
+            continue
+        if path not in by_path:
+            by_path[path] = dict(ref)
+            continue
+        existing = by_path[path]
+        if not ref.get("optional") or ref.get("mandatory") is True:
+            existing.pop("optional", None)
+            if ref.get("mandatory") is True:
+                existing["mandatory"] = True
+    return list(by_path.values())
 
 
 def _derive_output_dir(schema: dict[str, Any], fallback: str) -> str:

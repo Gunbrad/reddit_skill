@@ -26,8 +26,8 @@ Read in order:
 ### Business input files
 
 - `run:run_config.json`
-- User-provided product source files or URLs for the current run.
-- User-provided correction notes for the current product.
+- `run_config.product_sources` for user-provided product source files or URLs for the current run.
+- `run_config.provided_artifacts` for user-provided correction notes or source artifacts.
 - `run_config.provided_artifacts.product_brief` only when Stage 1 is skipped.
 
 ### Read order

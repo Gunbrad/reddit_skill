@@ -128,6 +128,8 @@ def _prepare_config(repo_root: Path, run_dir: Path | None, config_path: Path | N
     target = target_dir / "run_config.json"
     data = json.loads(config_path.read_text(encoding="utf-8")) if config_path.exists() else {}
     data["feishu_url"] = feishu_url
+    data["single_stage_mode"] = True
+    data["source_mode"] = "feishu_url"
     write_json(target, data)
     return target
 

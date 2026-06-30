@@ -45,9 +45,9 @@
     {
       "name": "topic-card-selection",
       "directory": "enter_output/skills/topic-card-selection",
-      "output_dir": "04_selected_cards",
+      "output_dir": "04_screen",
       "inputs": ["03_search/handoff_packet.json"],
-      "outputs": ["04_selected_cards/selected_cards.json", "04_selected_cards/handoff_packet.json"],
+      "outputs": ["04_screen/screening.md", "04_screen/passed_cards.json", "04_screen/handoff_packet.json"],
       "output_schema": "enter_output/skills/topic-card-selection/OUTPUT_SCHEMA.json",
       "handoff_schema": "enter_output/skills/topic-card-selection/HANDOFF_SCHEMA.json",
       "requires_host_action": false
@@ -56,8 +56,12 @@
       "name": "topic-card-optimization",
       "directory": "enter_output/skills/topic-card-optimization",
       "output_dir": "05_optimized_cards",
-      "inputs": ["04_selected_cards/handoff_packet.json"],
-      "outputs": ["05_optimized_cards/optimized_cards.json", "05_optimized_cards/handoff_packet.json"],
+      "inputs": ["04_screen/handoff_packet.json", "04_screen/passed_cards.json"],
+      "outputs": [
+        "05_optimized_cards/optimization.md",
+        "05_optimized_cards/drafts_md/{post_id}.md",
+        "05_optimized_cards/handoff_packet.json"
+      ],
       "output_schema": "enter_output/skills/topic-card-optimization/OUTPUT_SCHEMA.json",
       "handoff_schema": "enter_output/skills/topic-card-optimization/HANDOFF_SCHEMA.json",
       "requires_host_action": false

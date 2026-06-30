@@ -6,6 +6,31 @@ stage may depend ONLY on an upstream stage's **approved artifact** + **approved
 `handoff_packet.json`**. Reading any file not whitelisted in the stage's `INPUTS.md` or
 `PROMPT_INJECTION_CONTRACT.md` prompt packet is forbidden (CONTEXT_CONTRACT §5).
 
+## User intent routing / single-stage mode
+
+The host conversation decides whether the user wants a full run, a stage range, or one stage.
+The runtime executes only the selected stage order and must not expand a single-stage request
+into the full pipeline.
+
+Canonical routes:
+
+- Product research only: `run_stage.py --stage product-research`
+- Topic selection with existing upstream artifacts: `run_stage.py --stage topic-selection`
+- Topic selection without upstream artifacts: `run_stage.py --from product-research --to topic-selection`
+- Feishu formatting from a link: `run_stage.py --stage feishu-formatting --feishu-url "..."`
+- Native rewrite from a Feishu link: `run_stage.py --stage post-native-rewrite --feishu-url "..."`
+- Fact / brand check only: `run_stage.py --stage post-fact-brand-check`
+- Subreddit and image packaging only: `run_stage.py --stage post-subreddit-image`
+
+When `--feishu-url` is used, write it to `run_config.json` with `single_stage_mode: true` and
+`source_mode: "feishu_url"`. Stages that require Feishu document content must receive a current
+run artifact produced by the host or pause with a host action. They must not claim to have read
+Feishu content that is not present locally.
+
+If a single stage lacks a required upstream artifact, fail clearly with the missing
+run-relative path. Do not read old conversation history, old Feishu docs, unrelated run folders,
+generator raw responses, scratchpads, or failed drafts.
+
 ## Pipeline shape
 
 - **7 logical stages.** Stage 6 is a coordinator over sub-workers 6a-6d (see below).

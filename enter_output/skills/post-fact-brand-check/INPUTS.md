@@ -27,7 +27,7 @@ Read in order:
 
 - `run:run_config.json`
 - `run:06_optimized/native_posts.md`
-- `run:06_optimized/6a_handoff_packet.json` if written by 6a.
+- `run:06_optimized/6a_handoff_packet.json`
 - `run:global/product_fact_index.json`
 - `run:global/claim_boundary_table.json`
 - `run:global/brand_safety_rules.md`
@@ -55,7 +55,7 @@ Read in order:
 ## Allowed stage files
 
 - `06_optimized/native_posts.md`
-- `06_optimized/6a_handoff_packet.json` if written by 6a.
+- `06_optimized/6a_handoff_packet.json`
 - `enter_output/skills/post-fact-brand-check/EVALS.md`
 - `enter_output/skills/post-fact-brand-check/OUTPUT_SCHEMA.json`
 - `enter_output/skills/post-fact-brand-check/HANDOFF_SCHEMA.json`
