@@ -28,6 +28,7 @@ from .external_actions import (
     read_action_result,
     search_placeholder_enabled,
 )
+from .manifest import write_stage_manifest
 from .model_client import ModelClient
 from .prompt_builder import PromptBuilder, StageSpec
 from .validator import SchemaValidationError, validate_or_raise
@@ -209,6 +210,8 @@ class PipelineRunner:
         )
         try:
             candidate = parse_model_json(generator_response.content)
+            if "host_actions" in candidate and "external_actions" not in candidate:
+                candidate["external_actions"] = candidate["host_actions"]
             output = candidate["output"]
             handoff = candidate.get("handoff", {})
             write_json(runtime_dir / "candidate_output.json", output)
@@ -257,6 +260,8 @@ class PipelineRunner:
                 "handoff": handoff,
                 "eval_result": eval_result,
                 "attempt": attempt,
+                "generator_request_id": generator_response.request_id,
+                "eval_request_id": evaluator_response.request_id,
             }
         return {"status": "eval_failed", "eval_result": eval_result, "attempt": attempt}
 
@@ -280,6 +285,15 @@ class PipelineRunner:
         write_json(stage_dir / "handoff_packet.json", handoff)
         if spec.name in STAGE_HANDOFF_ALIASES:
             write_json(stage_dir / STAGE_HANDOFF_ALIASES[spec.name], handoff)
+        write_stage_manifest(
+            stage_dir,
+            stage=spec.name,
+            generator_request_id=result["generator_request_id"],
+            eval_request_id=result["eval_request_id"],
+            verdict=handoff["eval_result"].get("verdict", "pass"),
+            retry_count=max(0, int(result["attempt"]) - 1),
+            approved_handoff_path=f"{spec.output_dir}/handoff_packet.json",
+        )
         return {
             "output": output,
             "handoff": handoff,
@@ -314,9 +328,18 @@ class PipelineRunner:
                 append_manifest(run_dir, f"- search placeholder failed after `{spec.name}` approval: {exc}")
                 return {"status": "paused", "reason": "search_project_failed", "run_id": run_id, "run_dir": str(run_dir)}
             state["search_project"] = {"status": "completed", "receipt": receipt}
+            project_id = receipt.get("project_id") or receipt.get("id")
+            if project_id:
+                config["search_occupancy_project_id"] = project_id
+                write_json(run_dir / "run_config.json", config)
+                handoff_path = run_dir / spec.output_dir / "handoff_packet.json"
+                handoff = read_json(handoff_path)
+                handoff["search_occupancy_project_id"] = project_id
+                write_json(handoff_path, handoff)
 
-        external_actions = approved["candidate"].get("external_actions", [])
+        external_actions = approved["candidate"].get("host_actions") or approved["candidate"].get("external_actions", [])
         if external_actions:
+            write_json(run_dir / spec.output_dir / "host_actions.json", external_actions)
             created = create_action_manifest(run_dir, external_actions[0])
             manifest = created["manifest"]
             state["status"] = "needs_external_action"

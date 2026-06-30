@@ -81,11 +81,15 @@ def create_action_manifest(run_dir: Path, action: dict[str, Any]) -> dict[str, A
     manifest = {
         "status": "needs_external_action",
         "action_id": action_id,
-        "action_type": action["action_type"],
-        "title": action.get("title", action["action_type"]),
+        "action_type": action.get("action_type", action.get("type")),
+        "type": action.get("type", action.get("action_type")),
+        "title": action.get("title", action.get("type", action.get("action_type", "host_action"))),
         "content_file": action.get("content_file", ""),
         "result_file": result_file,
     }
+    for key, value in action.items():
+        if key not in manifest:
+            manifest[key] = value
     manifest_path = run_dir / "actions" / f"{action_id}.json"
     write_json(manifest_path, manifest)
     return {"manifest": manifest, "manifest_path": str(manifest_path)}
@@ -116,7 +120,7 @@ def read_action_result(run_dir: Path, manifest: dict[str, Any]) -> dict[str, Any
 
 def search_placeholder_enabled(config: dict[str, Any]) -> bool:
     settings = config.get("search_project_placeholder", {})
-    return bool(settings.get("enabled"))
+    return bool(settings.get("enabled") or config.get("create_search_occupancy_project"))
 
 
 def load_or_create_search_placeholder(

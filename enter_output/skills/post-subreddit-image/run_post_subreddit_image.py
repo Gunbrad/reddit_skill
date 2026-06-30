@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 
-STAGE = "search-query-occupancy"
+STAGE = "post-subreddit-image"
 # Delegates to enter_output/runtime/run_stage.py.
 RUN_STAGE = Path(__file__).resolve().parents[2] / "runtime" / "run_stage.py"
 

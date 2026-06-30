@@ -96,6 +96,14 @@ class PromptBuilder:
 
     def build_evaluator_packet(self, spec: StageSpec, run_dir: Path, artifact_paths: list[str]) -> dict[str, Any]:
         business_inputs = [{"path": f"run:{path}", "purpose": "artifact under review"} for path in artifact_paths]
+        minimal_context = []
+        for ref in [
+            "run:global/product_fact_index.json",
+            "run:global/claim_boundary_table.json",
+            "run:global/brand_safety_rules.md",
+        ]:
+            if self.resolve_ref(ref, run_dir).exists():
+                minimal_context.append({"path": ref, "purpose": "minimal fact/brand context", "optional": True})
         return {
             "worker_role": "evaluator",
             "stage": spec.name,
@@ -109,8 +117,9 @@ class PromptBuilder:
                 },
                 {"path": f"repo:enter_output/skills/{spec.name}/EVALS.md", "mandatory": True},
                 {"path": f"repo:enter_output/skills/{spec.name}/OUTPUT_SCHEMA.json", "mandatory": True},
+                {"path": f"repo:enter_output/skills/{spec.name}/HANDOFF_SCHEMA.json", "mandatory": True},
             ],
-            "business_inputs": business_inputs,
+            "business_inputs": business_inputs + minimal_context,
             "blind_eval": True,
             "allowed_extra_reads": [],
         }

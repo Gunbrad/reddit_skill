@@ -171,6 +171,20 @@ Other providers can be added by implementing `ModelClient.complete()` in
 
 ### Commands
 
+Preferred stage-level entry point:
+
+```powershell
+python enter_output\runtime\run_stage.py --stage product-research --run-dir temp_output\enter_001 --provider deepseek
+python enter_output\runtime\run_stage.py --stage topic-selection --run-dir temp_output\enter_001 --provider deepseek
+python enter_output\runtime\run_stage.py --from product-research --to topic-selection --run-dir temp_output\enter_001 --provider deepseek
+python enter_output\runtime\run_stage.py --stage feishu-formatting --feishu-url "https://..." --run-dir temp_output\format_001 --provider deepseek
+python enter_output\runtime\run_stage.py --stage post-native-rewrite --feishu-url "https://..." --run-dir temp_output\native_001 --provider deepseek
+```
+
+Each stage folder also has a lightweight wrapper such as
+`skills/topic-selection/run_topic_selection.py`. Wrappers do not contain stage logic; they only
+delegate to `runtime/run_stage.py`.
+
 Start a run:
 
 ```powershell
@@ -221,6 +235,8 @@ For each stage, the runtime writes:
 - `{stage_dir}/runtime/attempt_001/eval_result.json`
 - `{stage_dir}/approved_output.json`
 - `{stage_dir}/handoff_packet.json` for top-level stages
+- `{stage_dir}/run_manifest.json`
+- `{stage_dir}/run_manifest.md`
 
 Stage 6 sub-stage handoffs are written as `06_optimized/6a_handoff_packet.json` through
 `06_optimized/6d_handoff_packet.json`. After 6d passes, Python synthesizes the coordinator
@@ -249,15 +265,17 @@ independent evaluator passes; Python injects the final `eval_result` and validat
 ### Feishu actions
 
 Python never runs `lark-cli`. If a generator returns an external Feishu action, the run pauses
-and writes `actions/{action_id}.json`:
+and writes both `{stage_dir}/host_actions.json` and `actions/{action_id}.json`:
 
 ```json
 {
   "status": "needs_external_action",
   "action_id": "feishu_001",
-  "action_type": "feishu.create_document",
-  "title": "Document title",
-  "content_file": "06_optimized/final_posts.md",
+  "type": "feishu_create_doc",
+  "source_file": "02_topics/topics.md",
+  "target": "topic_doc",
+  "permission": "public_editable",
+  "write_result_to": "02_topics/feishu_links.md",
   "result_file": "actions/feishu_001.result.json"
 }
 ```
@@ -286,6 +304,7 @@ Run config:
 
 ```json
 {
+  "create_search_occupancy_project": true,
   "search_project_placeholder": {
     "enabled": true,
     "base_url_env": "SMARTCONTENT_BASE_URL",
@@ -295,5 +314,7 @@ Run config:
 ```
 
 The runtime uses `run_id` as the idempotency key and saves the receipt to
-`external/search_project.json`. API failure pauses the run and does not regenerate the product
-brief; `resume` retries only the external call.
+`external/search_project.json`. The returned project id is copied to `run_config.json` as
+`search_occupancy_project_id` and, when useful for handoff, to the approved Stage 1 handoff.
+API failure pauses the run and does not regenerate the product brief; `resume` retries only the
+external call.

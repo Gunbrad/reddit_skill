@@ -1,0 +1,116 @@
+{
+  "version": 1,
+  "stages": [
+    {
+      "name": "product-research",
+      "directory": "enter_output/skills/product-research",
+      "output_dir": "01_product_brief",
+      "inputs": ["enter_output/live_run/run_config.json"],
+      "outputs": [
+        "01_product_brief/product_brief.md",
+        "global/product_fact_index.json",
+        "global/claim_boundary_table.json",
+        "global/brand_safety_rules.md",
+        "01_product_brief/handoff_packet.json"
+      ],
+      "output_schema": "enter_output/skills/product-research/OUTPUT_SCHEMA.json",
+      "handoff_schema": "enter_output/skills/product-research/HANDOFF_SCHEMA.json",
+      "requires_host_action": false
+    },
+    {
+      "name": "topic-selection",
+      "directory": "enter_output/skills/topic-selection",
+      "output_dir": "02_topics",
+      "inputs": ["01_product_brief/handoff_packet.json"],
+      "outputs": ["02_topics/topics.md", "02_topics/handoff_packet.json", "02_topics/host_actions.json"],
+      "output_schema": "enter_output/skills/topic-selection/OUTPUT_SCHEMA.json",
+      "handoff_schema": "enter_output/skills/topic-selection/HANDOFF_SCHEMA.json",
+      "requires_host_action": true
+    },
+    {
+      "name": "search-query-occupancy",
+      "directory": "enter_output/skills/search-query-occupancy",
+      "output_dir": "03_search",
+      "inputs": ["02_topics/handoff_packet.json"],
+      "outputs": [
+        "03_search/search_queries.md",
+        "03_search/run_meta.json",
+        "03_search/occupancy_heat_evidence.json",
+        "03_search/handoff_packet.json"
+      ],
+      "output_schema": "enter_output/skills/search-query-occupancy/OUTPUT_SCHEMA.json",
+      "handoff_schema": "enter_output/skills/search-query-occupancy/HANDOFF_SCHEMA.json",
+      "requires_host_action": false
+    },
+    {
+      "name": "topic-card-selection",
+      "directory": "enter_output/skills/topic-card-selection",
+      "output_dir": "04_selected_cards",
+      "inputs": ["03_search/handoff_packet.json"],
+      "outputs": ["04_selected_cards/selected_cards.json", "04_selected_cards/handoff_packet.json"],
+      "output_schema": "enter_output/skills/topic-card-selection/OUTPUT_SCHEMA.json",
+      "handoff_schema": "enter_output/skills/topic-card-selection/HANDOFF_SCHEMA.json",
+      "requires_host_action": false
+    },
+    {
+      "name": "topic-card-optimization",
+      "directory": "enter_output/skills/topic-card-optimization",
+      "output_dir": "05_optimized_cards",
+      "inputs": ["04_selected_cards/handoff_packet.json"],
+      "outputs": ["05_optimized_cards/optimized_cards.json", "05_optimized_cards/handoff_packet.json"],
+      "output_schema": "enter_output/skills/topic-card-optimization/OUTPUT_SCHEMA.json",
+      "handoff_schema": "enter_output/skills/topic-card-optimization/HANDOFF_SCHEMA.json",
+      "requires_host_action": false
+    },
+    {
+      "name": "post-native-rewrite",
+      "directory": "enter_output/skills/post-native-rewrite",
+      "output_dir": "06_optimized",
+      "inputs": ["05_optimized_cards/handoff_packet.json"],
+      "outputs": ["06_optimized/native_posts.md", "06_optimized/6a_handoff_packet.json"],
+      "output_schema": "enter_output/skills/post-native-rewrite/OUTPUT_SCHEMA.json",
+      "handoff_schema": "enter_output/skills/post-native-rewrite/HANDOFF_SCHEMA.json",
+      "requires_host_action": false
+    },
+    {
+      "name": "post-fact-brand-check",
+      "directory": "enter_output/skills/post-fact-brand-check",
+      "output_dir": "06_optimized",
+      "inputs": ["06_optimized/6a_handoff_packet.json"],
+      "outputs": ["06_optimized/checked_posts.md", "06_optimized/6b_handoff_packet.json"],
+      "output_schema": "enter_output/skills/post-fact-brand-check/OUTPUT_SCHEMA.json",
+      "handoff_schema": "enter_output/skills/post-fact-brand-check/HANDOFF_SCHEMA.json",
+      "requires_host_action": false
+    },
+    {
+      "name": "post-subreddit-image",
+      "directory": "enter_output/skills/post-subreddit-image",
+      "output_dir": "06_optimized",
+      "inputs": ["06_optimized/6b_handoff_packet.json"],
+      "outputs": ["06_optimized/final_posts.md", "06_optimized/6c_handoff_packet.json"],
+      "output_schema": "enter_output/skills/post-subreddit-image/OUTPUT_SCHEMA.json",
+      "handoff_schema": "enter_output/skills/post-subreddit-image/HANDOFF_SCHEMA.json",
+      "requires_host_action": false
+    },
+    {
+      "name": "post-feishu-publish",
+      "directory": "enter_output/skills/post-feishu-publish",
+      "output_dir": "06_optimized",
+      "inputs": ["06_optimized/6c_handoff_packet.json"],
+      "outputs": ["06_optimized/feishu_links.md", "06_optimized/6d_handoff_packet.json", "06_optimized/host_actions.json"],
+      "output_schema": "enter_output/skills/post-feishu-publish/OUTPUT_SCHEMA.json",
+      "handoff_schema": "enter_output/skills/post-feishu-publish/HANDOFF_SCHEMA.json",
+      "requires_host_action": true
+    },
+    {
+      "name": "feishu-formatting",
+      "directory": "enter_output/skills/feishu-formatting",
+      "output_dir": "07_format",
+      "inputs": ["06_optimized/handoff_packet.json"],
+      "outputs": ["07_format/format_report.md", "07_format/handoff_packet.json", "07_format/host_actions.json"],
+      "output_schema": "enter_output/skills/feishu-formatting/OUTPUT_SCHEMA.json",
+      "handoff_schema": "enter_output/skills/feishu-formatting/HANDOFF_SCHEMA.json",
+      "requires_host_action": true
+    }
+  ]
+}

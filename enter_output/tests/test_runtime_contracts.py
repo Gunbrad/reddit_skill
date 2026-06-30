@@ -614,6 +614,193 @@ def test_pipeline_script_can_be_run_directly_for_help() -> None:
     assert "Run the Reddit posting workflow Python runtime" in result.stdout
 
 
+def test_stage_registry_declares_canonical_stage_order_and_outputs() -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    registry_path = repo_root / "enter_output" / "runtime" / "stage_registry.json"
+
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+
+    assert [stage["name"] for stage in registry["stages"]] == [
+        "product-research",
+        "topic-selection",
+        "search-query-occupancy",
+        "topic-card-selection",
+        "topic-card-optimization",
+        "post-native-rewrite",
+        "post-fact-brand-check",
+        "post-subreddit-image",
+        "post-feishu-publish",
+        "feishu-formatting",
+    ]
+    search_stage = next(stage for stage in registry["stages"] if stage["name"] == "search-query-occupancy")
+    assert search_stage["outputs"] == [
+        "03_search/search_queries.md",
+        "03_search/run_meta.json",
+        "03_search/occupancy_heat_evidence.json",
+        "03_search/handoff_packet.json",
+    ]
+    assert search_stage["requires_host_action"] is False
+
+
+def test_run_stage_script_supports_single_stage_range_resume_and_feishu_url_help() -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+
+    result = subprocess.run(
+        [sys.executable, str(repo_root / "enter_output" / "runtime" / "run_stage.py"), "--help"],
+        cwd=repo_root,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert "--stage" in result.stdout
+    assert "--from" in result.stdout
+    assert "--to" in result.stdout
+    assert "--resume" in result.stdout
+    assert "--feishu-url" in result.stdout
+
+
+def test_run_stage_single_stage_cli_runs_only_requested_stage(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path, ["alpha", "beta"])
+    config_path = repo / "run_config.json"
+    client = ScriptedModelClient([generator_payload("beta", "02_beta/main.md"), eval_payload("pass")])
+
+    from enter_output.runtime.run_stage import run_with_client
+
+    status = run_with_client(
+        repo_root=repo,
+        model_client=client,
+        stage="beta",
+        run_dir=repo / "enter_output" / "runs" / "single_beta",
+        config_path=config_path,
+        max_retries=0,
+    )
+
+    assert status["status"] == "completed"
+    assert [call["stage"] for call in client.calls] == ["beta", "beta"]
+    assert not (repo / "enter_output" / "runs" / "single_beta" / "01_alpha").exists()
+    assert (repo / "enter_output" / "runs" / "single_beta" / "02_beta" / "handoff_packet.json").exists()
+
+
+def test_run_stage_range_cli_stops_at_to_stage(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path, ["alpha", "beta", "gamma"])
+    client = ScriptedModelClient(
+        [
+            generator_payload("alpha", "01_alpha/main.md"),
+            eval_payload("pass"),
+            generator_payload("beta", "02_beta/main.md"),
+            eval_payload("pass"),
+        ]
+    )
+
+    from enter_output.runtime.run_stage import run_with_client
+
+    status = run_with_client(
+        repo_root=repo,
+        model_client=client,
+        from_stage="alpha",
+        to_stage="beta",
+        run_dir=repo / "enter_output" / "runs" / "range",
+        config_path=repo / "run_config.json",
+        max_retries=0,
+    )
+
+    assert status["status"] == "completed"
+    assert [call["stage"] for call in client.calls] == ["alpha", "alpha", "beta", "beta"]
+    assert not (repo / "enter_output" / "runs" / "range" / "03_gamma").exists()
+
+
+def test_host_actions_are_written_as_stage_artifact_and_pause_the_host(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path, ["topic-selection"])
+    action = {
+        "type": "feishu_create_doc",
+        "source_file": "02_topics/topics.md",
+        "target": "topic_doc",
+        "permission": "public_editable",
+        "write_result_to": "02_topics/feishu_links.md",
+    }
+    client = ScriptedModelClient(
+        [
+            generator_payload("topic-selection", "01_topic-selection/main.md", external_actions=[]),
+            eval_payload("pass"),
+        ]
+    )
+    client._responses[0]["host_actions"] = [action]
+    runner = make_runner(repo, client, ["topic-selection"], max_retries=0)
+
+    status = runner.start(repo / "run_config.json", run_id="host_actions")
+
+    assert status["status"] == "needs_external_action"
+    stage_actions = repo / "enter_output" / "runs" / "host_actions" / "01_topic-selection" / "host_actions.json"
+    assert json.loads(stage_actions.read_text(encoding="utf-8")) == [action]
+    manifest = json.loads(Path(status["action_manifest"]).read_text(encoding="utf-8"))
+    assert manifest["type"] == "feishu_create_doc"
+    assert manifest["write_result_to"] == "02_topics/feishu_links.md"
+
+
+def test_stage_run_manifest_records_generator_eval_and_handoff_paths(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path, ["alpha"])
+    client = ScriptedModelClient([generator_payload("alpha", "01_alpha/main.md"), eval_payload("pass")])
+    runner = make_runner(repo, client, ["alpha"], max_retries=0)
+
+    status = runner.start(repo / "run_config.json", run_id="manifest")
+
+    assert status["status"] == "completed"
+    manifest = json.loads((repo / "enter_output" / "runs" / "manifest" / "01_alpha" / "run_manifest.json").read_text(encoding="utf-8"))
+    assert manifest["stage"] == "alpha"
+    assert manifest["generator_request_id"].startswith("scripted-")
+    assert manifest["eval_request_id"].startswith("scripted-")
+    assert manifest["verdict"] == "pass"
+    assert manifest["retry_count"] == 0
+    assert manifest["approved_handoff_path"] == "01_alpha/handoff_packet.json"
+
+
+def test_search_project_creation_can_be_enabled_by_user_facing_flag(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path, ["product-research"])
+    config_path = repo / "run_config.json"
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    config["create_search_occupancy_project"] = True
+    write_json(config_path, config)
+    client = ScriptedModelClient(
+        [
+            generator_payload("product-research", "01_product-research/main.md"),
+            eval_payload("pass"),
+        ]
+    )
+    search_adapter = FlakySearchProjectAdapter()
+    search_adapter.calls = 1
+    runner = make_runner(repo, client, ["product-research"], max_retries=0, search_project_adapter=search_adapter)
+
+    status = runner.start(config_path, run_id="search_flag")
+
+    assert status["status"] == "completed"
+    updated_config = json.loads((repo / "enter_output" / "runs" / "search_flag" / "run_config.json").read_text(encoding="utf-8"))
+    handoff = json.loads((repo / "enter_output" / "runs" / "search_flag" / "01_product-research" / "handoff_packet.json").read_text(encoding="utf-8"))
+    assert updated_config["search_occupancy_project_id"] == "search-project-1"
+    assert handoff["search_occupancy_project_id"] == "search-project-1"
+
+
+def test_every_stage_has_lightweight_wrapper_script() -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    for stage in [
+        "product-research",
+        "topic-selection",
+        "search-query-occupancy",
+        "topic-card-selection",
+        "topic-card-optimization",
+        "post-native-rewrite",
+        "post-fact-brand-check",
+        "post-subreddit-image",
+        "post-feishu-publish",
+        "feishu-formatting",
+    ]:
+        wrapper_name = "run_" + stage.replace("-", "_") + ".py"
+        wrapper = repo_root / "enter_output" / "skills" / stage / wrapper_name
+        assert wrapper.exists(), f"missing wrapper for {stage}"
+        assert "enter_output/runtime/run_stage.py" in wrapper.read_text(encoding="utf-8").replace("\\", "/")
+
+
 def test_mock_schema_examples_honor_known_path_patterns() -> None:
     assert example_from_schema({"type": "string", "pattern": "^03_search/maps/.+[.]md$"}) == "03_search/maps/mock.md"
     assert example_from_schema({"type": "string", "pattern": "^03_search/maps/.+[.]json$"}) == "03_search/maps/mock.json"
