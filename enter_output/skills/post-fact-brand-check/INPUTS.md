@@ -32,6 +32,16 @@ Read in order:
 - `run:global/claim_boundary_table.json`
 - `run:global/brand_safety_rules.md`
 
+### Ad-hoc single-stage input files
+
+When `run_config.single_stage_mode` is true, the runtime may replace the Stage 6a
+canonical input with:
+
+- `run:input/native_posts.md`
+
+The generator must normalize the ad-hoc source into canonical Stage 6b output,
+especially `06_optimized/checked_posts.md` and `06_optimized/6b_handoff_packet.json`.
+
 ### Read order
 
 1. Required instruction files.
@@ -56,6 +66,7 @@ Read in order:
 
 - `06_optimized/native_posts.md`
 - `06_optimized/6a_handoff_packet.json`
+- `input/native_posts.md` only in ad-hoc fact/brand-check runs.
 - `enter_output/skills/post-fact-brand-check/EVALS.md`
 - `enter_output/skills/post-fact-brand-check/OUTPUT_SCHEMA.json`
 - `enter_output/skills/post-fact-brand-check/HANDOFF_SCHEMA.json`

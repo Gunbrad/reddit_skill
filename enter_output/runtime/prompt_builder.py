@@ -70,6 +70,7 @@ class PromptBuilder:
             if _is_optional_reference_line(source_line):
                 ref["optional"] = True
             business_inputs.append(ref)
+        business_inputs = _apply_ad_hoc_business_inputs(spec.name, business_inputs, run_config)
         packet = {
             "worker_role": "generator",
             "stage": spec.name,
@@ -86,10 +87,19 @@ class PromptBuilder:
             "output_schema": f"repo:enter_output/skills/{spec.name}/OUTPUT_SCHEMA.json",
             "handoff_schema": f"repo:enter_output/skills/{spec.name}/HANDOFF_SCHEMA.json",
             "evals": f"repo:enter_output/skills/{spec.name}/EVALS.md",
+            "evals_for_self_check_only": True,
         }
         return packet
 
-    def build_evaluator_packet(self, spec: StageSpec, run_dir: Path, artifact_paths: list[str]) -> dict[str, Any]:
+    def build_evaluator_packet(
+        self,
+        spec: StageSpec,
+        run_dir: Path,
+        artifact_paths: list[str],
+        *,
+        output: dict[str, Any] | None = None,
+        handoff: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         business_inputs = [{"path": f"run:{path}", "purpose": "artifact under review"} for path in artifact_paths]
         if spec.eval_inputs_path.exists():
             text = spec.eval_inputs_path.read_text(encoding="utf-8")
@@ -101,6 +111,15 @@ class PromptBuilder:
                 {"path": item, "mandatory": False}
                 for item in _path_items(_section_text(text, "### Optional instruction files"))
             )
+            eval_business_inputs = _business_input_refs(_section_text(text, "### Business input files"))
+            context = _context_from_refs(eval_business_inputs, run_dir, output or {}, handoff or {})
+            expanded_inputs = expand_placeholder_refs(
+                eval_business_inputs,
+                run_dir,
+                spec.name,
+                output or {},
+                context,
+            )
             return {
                 "worker_role": "evaluator",
                 "stage": spec.name,
@@ -110,7 +129,7 @@ class PromptBuilder:
                 or "Run the Reviewer prompt from EVALS.md as an independent evaluator.",
                 "instruction_files": instruction_files or _default_eval_instruction_files(spec),
                 "business_inputs": _dedupe_file_refs(
-                    business_inputs + _business_input_refs(_section_text(text, "### Business input files"))
+                    business_inputs + expanded_inputs
                 ),
                 "read_order": _list_items(_section_text(text, "### Read order")),
                 "blind_eval": True,
@@ -135,6 +154,51 @@ class PromptBuilder:
             "blind_eval": True,
             "allowed_extra_reads": [],
         }
+
+    def packet_manifest(
+        self,
+        packet: dict[str, Any],
+        run_dir: Path,
+        *,
+        request_id: str | None = None,
+        attempt: int | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        files_included, estimated_chars = self._files_included(packet, run_dir)
+        manifest = {
+            "stage": packet.get("stage"),
+            "kind": packet.get("worker_role"),
+            "worker_role": packet.get("worker_role"),
+            "attempt": attempt,
+            "request_id": request_id,
+            "files_included": files_included,
+            "instruction_files": packet.get("instruction_files", []),
+            "business_inputs": packet.get("business_inputs", []),
+            "missing_inputs": self.missing_mandatory_files(packet, run_dir) + self.missing_business_inputs(packet, run_dir),
+            "forbidden_files": packet.get("forbidden_files", []),
+            "estimated_chars": estimated_chars,
+            "metadata": _redact_metadata(metadata or {}),
+        }
+        if packet.get("evals_for_self_check_only"):
+            manifest["evals_for_self_check_only"] = True
+        return manifest
+
+    def _files_included(self, packet: dict[str, Any], run_dir: Path) -> tuple[list[str], int]:
+        included: list[str] = []
+        estimated_chars = 0
+        for ref in list(packet.get("instruction_files", [])) + list(packet.get("business_inputs", [])):
+            path_ref = ref.get("path")
+            if not path_ref:
+                continue
+            resolved = self.resolve_ref(path_ref, run_dir)
+            if resolved is None or not resolved.exists() or resolved.is_dir():
+                continue
+            included.append(path_ref)
+            try:
+                estimated_chars += len(resolved.read_text(encoding="utf-8"))
+            except UnicodeDecodeError:
+                estimated_chars += resolved.stat().st_size
+        return included, estimated_chars
 
     def messages_for_packet(self, packet: dict[str, Any], run_dir: Path) -> list[dict[str, str]]:
         missing = self.missing_mandatory_files(packet, run_dir)
@@ -189,6 +253,9 @@ class PromptBuilder:
             if relative == "run_config.json":
                 continue
             if "{" in relative and "}" in relative:
+                if packet.get("worker_role") == "evaluator":
+                    missing.append(path_ref)
+                    continue
                 glob_pattern = re.sub(r"\{[^}]+\}", "*", relative)
                 if not list(run_dir.glob(glob_pattern)):
                     missing.append(path_ref)
@@ -275,6 +342,208 @@ def _business_input_refs(section: str) -> list[dict[str, Any]]:
     return refs
 
 
+def expand_placeholder_refs(
+    refs: list[dict[str, Any]],
+    run_dir: Path,
+    stage: str,
+    output: dict[str, Any],
+    handoff: dict[str, Any],
+) -> list[dict[str, Any]]:
+    expanded: list[dict[str, Any]] = []
+    for ref in refs:
+        path_ref = ref.get("path", "")
+        placeholders = re.findall(r"\{([^}]+)\}", path_ref)
+        if not placeholders:
+            expanded.append(ref)
+            continue
+        replacements = [_placeholder_values(name, output, handoff) for name in placeholders]
+        if not replacements or any(not values for values in replacements):
+            missing_ref = dict(ref)
+            missing_ref["purpose"] = ref.get("purpose", "business input")
+            missing_ref["missing_reason"] = "placeholder_not_resolved"
+            expanded.append(missing_ref)
+            continue
+        for values in zip(*replacements):
+            concrete_path = path_ref
+            for placeholder, value in zip(placeholders, values):
+                concrete_path = concrete_path.replace("{" + placeholder + "}", str(value))
+            concrete = dict(ref)
+            concrete["path"] = concrete_path
+            concrete["expanded_from"] = path_ref
+            concrete["purpose"] = ref.get("purpose", "business input")
+            expanded.append(concrete)
+    return expanded
+
+
+def _apply_ad_hoc_business_inputs(
+    stage: str,
+    business_inputs: list[dict[str, Any]],
+    run_config: dict[str, Any],
+) -> list[dict[str, Any]]:
+    source_mode = run_config.get("source_mode")
+    single_stage = bool(run_config.get("single_stage_mode") or run_config.get("requested_scope") == "single_stage")
+    if not source_mode and not single_stage:
+        return business_inputs
+
+    by_stage: dict[str, dict[str, Any]] = {
+        "post-native-rewrite": {
+            "remove_prefixes": ("run:05_optimized_cards/",),
+            "source_paths": {
+                "feishu_url": run_config.get("expected_artifact") or "input/source_doc.md",
+                "inline_text": run_config.get("inline_text_path") or "input/source_post.md",
+                "provided_file": run_config.get("source_text_path") or "input/source_post.md",
+                "run_artifact": run_config.get("source_artifact_path") or "input/source_post.md",
+            },
+        },
+        "post-fact-brand-check": {
+            "remove_prefixes": ("run:06_optimized/native_posts.md", "run:06_optimized/6a_handoff_packet.json"),
+            "source_paths": {
+                "inline_text": run_config.get("inline_text_path") or "input/native_posts.md",
+                "provided_file": run_config.get("source_text_path") or "input/native_posts.md",
+                "run_artifact": run_config.get("source_artifact_path") or "input/native_posts.md",
+            },
+        },
+        "post-subreddit-image": {
+            "remove_prefixes": ("run:06_optimized/checked_posts.md", "run:06_optimized/6b_handoff_packet.json"),
+            "source_paths": {
+                "inline_text": run_config.get("inline_text_path") or "input/checked_posts.md",
+                "provided_file": run_config.get("source_text_path") or "input/checked_posts.md",
+                "run_artifact": run_config.get("source_artifact_path") or "input/checked_posts.md",
+            },
+        },
+        "feishu-formatting": {
+            "remove_prefixes": ("run:06_optimized/",),
+            "source_paths": {
+                "feishu_url": run_config.get("expected_artifact") or "07_format/live_doc_snapshot.md",
+                "inline_text": run_config.get("inline_text_path") or "input/source_doc.md",
+                "provided_file": run_config.get("source_text_path") or "input/source_doc.md",
+                "run_artifact": run_config.get("source_artifact_path") or "input/source_doc.md",
+            },
+        },
+    }
+    stage_rule = by_stage.get(stage)
+    if not stage_rule:
+        return business_inputs
+    source_path = stage_rule["source_paths"].get(source_mode)
+    if not source_path:
+        return business_inputs
+    remove_prefixes = stage_rule["remove_prefixes"]
+    filtered = [
+        ref
+        for ref in business_inputs
+        if not any(ref.get("path", "").startswith(prefix) for prefix in remove_prefixes)
+    ]
+    filtered.append({"path": f"run:{source_path}", "purpose": "ad-hoc source input"})
+    return _dedupe_file_refs(filtered)
+
+
+def _context_from_refs(
+    refs: list[dict[str, Any]],
+    run_dir: Path,
+    output: dict[str, Any],
+    handoff: dict[str, Any],
+) -> dict[str, Any]:
+    context: dict[str, Any] = {}
+    _merge_context(context, output)
+    _merge_context(context, handoff)
+    for ref in refs:
+        path_ref = ref.get("path", "")
+        if "{" in path_ref or not path_ref.startswith("run:") or not path_ref.endswith(".json"):
+            continue
+        resolved = run_dir / path_ref.removeprefix("run:")
+        if not resolved.exists():
+            continue
+        try:
+            loaded = json.loads(resolved.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(loaded, dict):
+            _merge_context(context, loaded)
+    return context
+
+
+def _merge_context(target: dict[str, Any], source: dict[str, Any]) -> None:
+    for key, value in source.items():
+        if key not in target:
+            target[key] = value
+
+
+def _placeholder_values(name: str, output: dict[str, Any], handoff: dict[str, Any]) -> list[str]:
+    combined = {}
+    _merge_context(combined, output)
+    _merge_context(combined, handoff)
+    if name == "post_id":
+        return _post_ids(combined)
+    if name == "direction_id":
+        return _values_for_keys(
+            combined,
+            ("direction_id", "selected_direction_id", "chosen_direction_id", "direction_ids", "chosen_direction_ids"),
+        )
+    if name == "topic_id":
+        return _values_for_keys(combined, ("topic_id", "topic_ids", "chosen_topic_ids", "selected_topic_ids"))
+    return _values_for_keys(combined, (name, f"{name}s", f"selected_{name}s", f"chosen_{name}s"))
+
+
+def _post_ids(value: Any) -> list[str]:
+    ids = _values_for_keys(value, ("post_id", "post_ids", "selected_post_ids", "chosen_post_ids"))
+    for key in ("selected_posts", "chosen_posts", "posts"):
+        selected = _find_key_values(value, key)
+        for item in selected:
+            if isinstance(item, list):
+                for child in item:
+                    ids.extend(_post_id_from_item(child))
+            else:
+                ids.extend(_post_id_from_item(item))
+    return _unique_strings(ids)
+
+
+def _post_id_from_item(item: Any) -> list[str]:
+    if isinstance(item, str):
+        return [item]
+    if not isinstance(item, dict):
+        return []
+    for key in ("post_id", "id", "post_slug", "slug"):
+        value = item.get(key)
+        if isinstance(value, str):
+            return [value]
+    return []
+
+
+def _values_for_keys(value: Any, keys: tuple[str, ...]) -> list[str]:
+    values: list[str] = []
+    for key in keys:
+        for found in _find_key_values(value, key):
+            if isinstance(found, list):
+                values.extend(str(item) for item in found if isinstance(item, (str, int)))
+            elif isinstance(found, (str, int)):
+                values.append(str(found))
+    return _unique_strings(values)
+
+
+def _find_key_values(value: Any, key: str) -> list[Any]:
+    found: list[Any] = []
+    if isinstance(value, dict):
+        for current_key, current_value in value.items():
+            if current_key == key:
+                found.append(current_value)
+            found.extend(_find_key_values(current_value, key))
+    elif isinstance(value, list):
+        for item in value:
+            found.extend(_find_key_values(item, key))
+    return found
+
+
+def _unique_strings(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    unique: list[str] = []
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        unique.append(value)
+    return unique
+
+
 def _is_optional_reference_line(source_line: str) -> bool:
     lowered = source_line.lower()
     return (
@@ -348,3 +617,13 @@ def _schema_const_paths(schema: Any) -> list[str]:
 
 def _without_large_schema(packet: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in packet.items() if key not in {"output_schema_json", "handoff_schema_json"}}
+
+
+def _redact_metadata(metadata: dict[str, Any]) -> dict[str, Any]:
+    redacted: dict[str, Any] = {}
+    for key, value in metadata.items():
+        if any(secret_word in key.lower() for secret_word in ("key", "cookie", "secret", "token")):
+            redacted[key] = "[REDACTED]"
+        else:
+            redacted[key] = value
+    return redacted

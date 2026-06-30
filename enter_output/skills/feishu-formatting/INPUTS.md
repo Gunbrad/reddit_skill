@@ -35,6 +35,17 @@ Read in order:
 - `run:global/brand_safety_rules.md`
 - `run:global/product_fact_index.json` only for brand-name and claim-boundary verification.
 
+### Ad-hoc single-stage input files
+
+When `run_config.single_stage_mode` is true, a Feishu URL alone is not enough. The host
+must fetch the current document first and write one current-run artifact:
+
+- `run:07_format/live_doc_snapshot.md` for formatting an existing Feishu doc.
+- `run:input/source_doc.md` when the fetched document body is used as the source.
+
+The generator must normalize the ad-hoc source into canonical Stage 7 output,
+especially `07_format/format_report.md` and `07_format/handoff_packet.json`.
+
 ### Read order
 
 1. Required instruction files.
@@ -60,6 +71,8 @@ Read in order:
 - `06_optimized/handoff_packet.json`
 - `06_optimized/feishu_links.md`
 - The live Feishu post doc URL recorded in `06_optimized/feishu_links.md`.
+- `07_format/live_doc_snapshot.md` only after current-run Feishu ingest.
+- `input/source_doc.md` only after current-run Feishu ingest.
 - `06_optimized/final_posts.md` only to restore dropped title, subreddit, backup-title, body, comment, or resource blocks.
 - `06_optimized/images/image_feishu.md` only when image anchors must be verified.
 

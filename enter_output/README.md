@@ -156,6 +156,7 @@ Dry run without model spend:
 
 ```powershell
 python enter_output\pipeline.py start --provider mock --config enter_output\live_run\run_config.json
+python enter_output\runtime\run_stage.py --stage post-native-rewrite --run-dir temp_output\native_001 --dry-run-packet --provider mock
 ```
 
 OpenAI-compatible provider for future GPT-compatible gateways:
@@ -180,6 +181,7 @@ python enter_output\runtime\run_stage.py --stage topic-selection --run-dir temp_
 python enter_output\runtime\run_stage.py --from product-research --to topic-selection --run-dir temp_output\enter_001 --provider deepseek
 python enter_output\runtime\run_stage.py --stage feishu-formatting --feishu-url "https://..." --run-dir temp_output\format_001 --provider deepseek
 python enter_output\runtime\run_stage.py --stage post-native-rewrite --feishu-url "https://..." --run-dir temp_output\native_001 --provider deepseek
+python enter_output\runtime\run_stage.py --intent enter_output\live_run\intent.json --run-dir temp_output\intent_001 --provider deepseek
 ```
 
 ### User Intent Routing / Single-stage Mode
@@ -207,11 +209,16 @@ Common routes:
 
 When `--feishu-url` is passed, the runtime writes it into `run_config.json` with
 `single_stage_mode: true` and `source_mode: "feishu_url"`. For stages that need the Feishu
-document body (`post-native-rewrite`, `post-feishu-publish`, `feishu-formatting`), Python does
-not pretend it has read the document. If the required local source artifact is missing, the run
-must either fail clearly with the missing run-relative path or pause through a `host_actions`
-manifest so the host can read Feishu with `lark-cli` and write the result back into the current
-run folder.
+document body (`post-native-rewrite`, `feishu-formatting`), Python does not pretend it has read
+the document. If the required local source artifact is missing, the run pauses before the model
+request with `status: "needs_external_action"` and an `action_type:
+"feishu.read_document"` manifest. The host reads Feishu with `lark-cli`, writes the fetched body
+to the current run folder (`input/source_doc.md` or `07_format/live_doc_snapshot.md`), writes the
+action result JSON, then resumes the run.
+
+Intent files follow `runtime/intent_schema.json` and can select a full pipeline, a stage range,
+or a single stage. They also carry `source_mode`, source artifact paths, and the compressed
+`user_goal` so the host conversation and runtime use the same contract.
 
 If a single stage is missing an upstream artifact, the runtime returns a clear failure such as
 `upstream_artifact_missing` or `missing_eval_input`. It must not silently read old conversation
@@ -265,10 +272,12 @@ approved artifacts are written under `temp_output/{run_id}/`.
 For each stage, the runtime writes:
 
 - `{stage_dir}/input_manifest.json`
+- `{stage_dir}/runtime/attempt_001/generator_request_manifest.json`
 - `{stage_dir}/runtime/attempt_001/generator_raw_response.json`
 - `{stage_dir}/runtime/attempt_001/candidate_output.json`
 - `{stage_dir}/runtime/attempt_001/candidate_handoff_packet.json`
 - `{stage_dir}/runtime/attempt_001/eval_input_manifest.json`
+- `{stage_dir}/runtime/attempt_001/evaluator_request_manifest.json`
 - `{stage_dir}/runtime/attempt_001/eval_raw_response.json`
 - `{stage_dir}/runtime/attempt_001/eval_result.json`
 - `{stage_dir}/approved_output.json`
@@ -279,6 +288,11 @@ For each stage, the runtime writes:
 Stage 6 sub-stage handoffs are written as `06_optimized/6a_handoff_packet.json` through
 `06_optimized/6d_handoff_packet.json`. After 6d passes, Python synthesizes the coordinator
 `06_optimized/handoff_packet.json` with `stage_id: stage_6_post_optimization`.
+
+`--dry-run-packet` writes `generator_input_manifest.json` and
+`evaluator_input_manifest.preview.json` at the run root without calling the model. Use these to
+inspect instruction files, business inputs, missing inputs, forbidden files, and estimated
+character count before spending a request.
 
 ### Generator response convention
 

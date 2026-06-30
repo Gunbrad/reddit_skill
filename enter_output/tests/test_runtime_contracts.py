@@ -856,6 +856,8 @@ def test_run_stage_single_stage_cli_runs_only_requested_stage(tmp_path: Path) ->
 def test_single_stage_feishu_url_writes_config(tmp_path: Path) -> None:
     repo = make_repo(tmp_path, ["alpha", "feishu-formatting"])
     config_path = repo / "run_config.json"
+    run_dir = repo / "enter_output" / "runs" / "single_feishu"
+    write_text(run_dir / "07_format" / "live_doc_snapshot.md", "# fetched doc\n")
     client = ScriptedModelClient(
         [generator_payload("feishu-formatting", "02_feishu-formatting/main.md"), eval_payload("pass")]
     )
@@ -866,7 +868,7 @@ def test_single_stage_feishu_url_writes_config(tmp_path: Path) -> None:
         repo_root=repo,
         model_client=client,
         stage="feishu-formatting",
-        run_dir=repo / "enter_output" / "runs" / "single_feishu",
+        run_dir=run_dir,
         config_path=config_path,
         feishu_url="https://example.feishu.cn/docx/test",
         max_retries=0,
@@ -1005,3 +1007,204 @@ def test_mock_schema_examples_honor_known_path_patterns() -> None:
     assert example_from_schema({"type": "string", "pattern": "^03_search/maps/.+[.]md$"}) == "03_search/maps/mock.md"
     assert example_from_schema({"type": "string", "pattern": "^03_search/maps/.+[.]json$"}) == "03_search/maps/mock.json"
     assert example_from_schema({"type": "string", "pattern": "^03_search/topic_cards/.+"}) == "03_search/topic_cards/mock.json"
+
+
+def test_intent_file_selects_single_stage_and_records_source_mode(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path, ["alpha", "post-native-rewrite"])
+    write_stage(repo, "post-native-rewrite", "stage_post_native_rewrite", "06_optimized/native_posts.md")
+    intent_path = repo / "intent.json"
+    write_json(
+        intent_path,
+        {
+            "requested_scope": "single_stage",
+            "target_stage": "post-native-rewrite",
+            "source_mode": "inline_text",
+            "inline_text_path": "input/source_post.md",
+            "stop_after_stage": "post-native-rewrite",
+            "user_goal": "make the post more Reddit-native",
+        },
+    )
+    run_dir = repo / "enter_output" / "runs" / "intent_native"
+    write_text(run_dir / "input" / "source_post.md", "# draft\n")
+    client = ScriptedModelClient(
+        [generator_payload("post-native-rewrite", "06_optimized/native_posts.md"), eval_payload("pass")]
+    )
+
+    from enter_output.runtime.run_stage import run_with_client
+
+    status = run_with_client(
+        repo_root=repo,
+        model_client=client,
+        intent_path=intent_path,
+        run_dir=run_dir,
+        config_path=repo / "run_config.json",
+        max_retries=0,
+    )
+
+    assert status["status"] == "completed"
+    assert [call["stage"] for call in client.calls] == ["post-native-rewrite", "post-native-rewrite"]
+    written_config = json.loads((run_dir / "run_config.json").read_text(encoding="utf-8"))
+    assert written_config["source_mode"] == "inline_text"
+    assert written_config["user_goal"] == "make the post more Reddit-native"
+    assert not (run_dir / "01_alpha").exists()
+
+
+def test_feishu_url_requires_ingest_before_native_rewrite(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path, ["post-native-rewrite"])
+    write_stage(repo, "post-native-rewrite", "stage_post_native_rewrite", "06_optimized/native_posts.md")
+    client = ScriptedModelClient([])
+
+    from enter_output.runtime.run_stage import run_with_client
+
+    status = run_with_client(
+        repo_root=repo,
+        model_client=client,
+        stage="post-native-rewrite",
+        run_dir=repo / "enter_output" / "runs" / "needs_feishu",
+        config_path=repo / "run_config.json",
+        feishu_url="https://example.feishu.cn/docx/doc123",
+        max_retries=0,
+    )
+
+    assert status["status"] == "needs_external_action"
+    assert status["stage"] == "post-native-rewrite"
+    assert status["action_type"] == "feishu.read_document"
+    assert status["expected_artifact"].endswith("input/source_doc.md")
+    assert len(client.calls) == 0
+
+
+def test_resume_after_feishu_ingest_runs_native_rewrite(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path, ["post-native-rewrite"])
+    write_stage(repo, "post-native-rewrite", "stage_post_native_rewrite", "06_optimized/native_posts.md")
+    first_client = ScriptedModelClient([])
+    runner = make_runner(repo, first_client, ["post-native-rewrite"], max_retries=0)
+    config_path = repo / "run_config.json"
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    config.update({"source_mode": "feishu_url", "feishu_url": "https://example.feishu.cn/docx/doc123"})
+    write_json(config_path, config)
+
+    status = runner.start(config_path, run_id="resume_feishu")
+
+    assert status["status"] == "needs_external_action"
+    assert len(first_client.calls) == 0
+    run_dir = repo / "enter_output" / "runs" / "resume_feishu"
+    write_text(run_dir / "input" / "source_doc.md", "# Feishu source\n")
+    write_json(run_dir / "actions" / "feishu_read.result.json", {"url": config["feishu_url"], "artifact": "input/source_doc.md"})
+
+    second_client = ScriptedModelClient(
+        [generator_payload("post-native-rewrite", "06_optimized/native_posts.md"), eval_payload("pass")]
+    )
+    resumed_runner = make_runner(repo, second_client, ["post-native-rewrite"], max_retries=0)
+
+    resumed = resumed_runner.resume("resume_feishu")
+
+    assert resumed["status"] == "completed"
+    assert [call["kind"] for call in second_client.calls] == ["generator", "evaluator"]
+
+
+def test_eval_placeholder_expands_selected_post_ids_only(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path, ["post-native-rewrite"])
+    write_stage(repo, "post-native-rewrite", "stage_post_native_rewrite", "06_optimized/native_posts.md")
+    write_eval_inputs(
+        repo,
+        "post-native-rewrite",
+        [
+            "- `run:05_optimized_cards/handoff_packet.json`",
+            "- `run:05_optimized_cards/drafts_md/{post_id}.md` for selected posts only.",
+        ],
+    )
+    run_dir = repo / "enter_output" / "runs" / "eval_selected"
+    write_text(run_dir / "06_optimized" / "native_posts.md", "# native\n")
+    write_json(
+        run_dir / "05_optimized_cards" / "handoff_packet.json",
+        {"selected_posts": [{"post_id": "post_a"}, {"id": "post_b"}]},
+    )
+    write_text(run_dir / "05_optimized_cards" / "drafts_md" / "post_a.md", "# post a\n")
+    write_text(run_dir / "05_optimized_cards" / "drafts_md" / "post_b.md", "# post b\n")
+    write_text(run_dir / "05_optimized_cards" / "drafts_md" / "post_c.md", "# post c\n")
+    builder = PromptBuilder(repo)
+    spec = builder.load_stage("post-native-rewrite")
+
+    packet = builder.build_evaluator_packet(
+        spec,
+        run_dir,
+        ["06_optimized/native_posts.md"],
+        output={"artifact_paths": {"native": "06_optimized/native_posts.md"}},
+        handoff={"selected_posts": [{"post_id": "post_a"}, {"id": "post_b"}]},
+    )
+
+    eval_paths = [item["path"] for item in packet["business_inputs"]]
+    assert "run:05_optimized_cards/drafts_md/post_a.md" in eval_paths
+    assert "run:05_optimized_cards/drafts_md/post_b.md" in eval_paths
+    assert "run:05_optimized_cards/drafts_md/post_c.md" not in eval_paths
+    assert "run:05_optimized_cards/drafts_md/{post_id}.md" not in eval_paths
+    assert builder.missing_business_inputs(packet, run_dir) == []
+
+
+def test_eval_placeholder_missing_selected_id_is_missing_eval_input(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path, ["post-native-rewrite"])
+    write_stage(repo, "post-native-rewrite", "stage_post_native_rewrite", "06_optimized/native_posts.md")
+    write_eval_inputs(
+        repo,
+        "post-native-rewrite",
+        ["- `run:05_optimized_cards/drafts_md/{post_id}.md` for selected posts only."],
+    )
+    run_dir = repo / "enter_output" / "runs" / "eval_missing_selected"
+    write_text(run_dir / "06_optimized" / "native_posts.md", "# native\n")
+    builder = PromptBuilder(repo)
+    spec = builder.load_stage("post-native-rewrite")
+
+    packet = builder.build_evaluator_packet(
+        spec,
+        run_dir,
+        ["06_optimized/native_posts.md"],
+        output={"artifact_paths": {"native": "06_optimized/native_posts.md"}},
+        handoff={},
+    )
+
+    assert builder.missing_business_inputs(packet, run_dir) == ["run:05_optimized_cards/drafts_md/{post_id}.md"]
+
+
+def test_dry_run_packet_does_not_call_model_and_writes_preview_manifests(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path, ["alpha"])
+    run_dir = repo / "enter_output" / "runs" / "dry_run"
+    client = ScriptedModelClient([])
+
+    from enter_output.runtime.run_stage import run_with_client
+
+    status = run_with_client(
+        repo_root=repo,
+        model_client=client,
+        stage="alpha",
+        run_dir=run_dir,
+        config_path=repo / "run_config.json",
+        dry_run_packet=True,
+    )
+
+    assert status["status"] == "dry_run_packet"
+    assert len(client.calls) == 0
+    generator_manifest = json.loads((run_dir / "generator_input_manifest.json").read_text(encoding="utf-8"))
+    evaluator_manifest = json.loads((run_dir / "evaluator_input_manifest.preview.json").read_text(encoding="utf-8"))
+    assert generator_manifest["worker_role"] == "generator"
+    assert evaluator_manifest["worker_role"] == "evaluator"
+    assert "estimated_chars" in generator_manifest
+    assert "missing_inputs" in evaluator_manifest
+
+
+def test_generator_request_manifest_and_eval_request_manifest_written(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path, ["alpha"])
+    client = ScriptedModelClient([generator_payload("alpha", "01_alpha/main.md"), eval_payload("pass")])
+    runner = make_runner(repo, client, ["alpha"], max_retries=0)
+
+    status = runner.start(repo / "run_config.json", run_id="request_manifests")
+
+    assert status["status"] == "completed"
+    attempt_dir = repo / "enter_output" / "runs" / "request_manifests" / "01_alpha" / "runtime" / "attempt_001"
+    generator_manifest = json.loads((attempt_dir / "generator_request_manifest.json").read_text(encoding="utf-8"))
+    evaluator_manifest = json.loads((attempt_dir / "evaluator_request_manifest.json").read_text(encoding="utf-8"))
+    assert generator_manifest["kind"] == "generator"
+    assert evaluator_manifest["kind"] == "evaluator"
+    assert generator_manifest["request_id"] == client.calls[0]["request_id"]
+    assert evaluator_manifest["request_id"] == client.calls[1]["request_id"]
+    assert all("raw_response" not in path for path in evaluator_manifest["files_included"])
+    assert all("candidate_" not in path for path in evaluator_manifest["files_included"])

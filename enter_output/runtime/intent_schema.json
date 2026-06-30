@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "requested_scope": {
+      "enum": ["full_pipeline", "stage_range", "single_stage"]
+    },
+    "target_stage": {
+      "type": "string"
+    },
+    "from_stage": {
+      "type": "string"
+    },
+    "to_stage": {
+      "type": "string"
+    },
+    "source_mode": {
+      "enum": ["run_artifact", "feishu_url", "inline_text", "provided_file"]
+    },
+    "feishu_url": {
+      "type": "string"
+    },
+    "inline_text_path": {
+      "type": "string"
+    },
+    "source_text_path": {
+      "type": "string"
+    },
+    "source_artifact_path": {
+      "type": "string"
+    },
+    "expected_artifact": {
+      "type": "string"
+    },
+    "stop_after_stage": {
+      "type": "string"
+    },
+    "user_goal": {
+      "type": "string"
+    }
+  }
+}

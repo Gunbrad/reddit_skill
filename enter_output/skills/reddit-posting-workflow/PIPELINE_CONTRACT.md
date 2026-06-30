@@ -12,6 +12,11 @@ The host conversation decides whether the user wants a full run, a stage range, 
 The runtime executes only the selected stage order and must not expand a single-stage request
 into the full pipeline.
 
+The host may pass `--intent <path>` where the JSON matches
+`enter_output/runtime/intent_schema.json`. The intent may include `requested_scope`,
+`target_stage`, `from_stage`, `to_stage`, `source_mode`, source artifact paths,
+`stop_after_stage`, and `user_goal`.
+
 Canonical routes:
 
 - Product research only: `run_stage.py --stage product-research`
@@ -24,12 +29,16 @@ Canonical routes:
 
 When `--feishu-url` is used, write it to `run_config.json` with `single_stage_mode: true` and
 `source_mode: "feishu_url"`. Stages that require Feishu document content must receive a current
-run artifact produced by the host or pause with a host action. They must not claim to have read
-Feishu content that is not present locally.
+run artifact produced by the host or pause before model execution with
+`status: "needs_external_action"` and `action_type: "feishu.read_document"`. They must not claim
+to have read Feishu content that is not present locally.
 
 If a single stage lacks a required upstream artifact, fail clearly with the missing
 run-relative path. Do not read old conversation history, old Feishu docs, unrelated run folders,
 generator raw responses, scratchpads, or failed drafts.
+
+`--dry-run-packet` writes generator/evaluator preview manifests without model requests. Use it to
+check included files, missing inputs, forbidden files, and rough character count.
 
 ## Pipeline shape
 
@@ -118,11 +127,20 @@ Explicitly authorized to run sub-workers (worker depth > 1 allowed here only).
 - **Handoff:** `06_optimized/handoff_packet.json` (帖子 doc URL, image doc URL or "none",
   per-post viral_intent preservation verdict).
 
+Single-stage ad-hoc runs may enter 6a/6b/6c from `input/source_doc.md`,
+`input/source_post.md`, `input/native_posts.md`, or `input/checked_posts.md`, but each worker must
+normalize the input into its canonical Stage 6 artifact and handoff before anything downstream
+reads it.
+
 ### Stage 7 — feishu-formatting
 - **Reads (allowed):** `run_config.json`, `global/brand_safety_rules.md`; Stage 6 handoff
   packet + the 帖子 Feishu doc URL from `06_optimized/feishu_links.md`.
 - **Writes:** `07_format/format_report.md`; edits the Feishu doc in place (block-level).
 - **Handoff:** `07_format/handoff_packet.json` (final doc URLs, formatting verdict).
+
+Single-stage Feishu formatting from a URL must first ingest the current document to
+`07_format/live_doc_snapshot.md` or `input/source_doc.md` through the host action. A URL alone is
+not document content.
 
 ## Handoff rule
 

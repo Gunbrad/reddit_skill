@@ -34,6 +34,17 @@ Read in order:
 - `run:global/claim_boundary_table.json`
 - `run:global/brand_safety_rules.md`
 
+### Ad-hoc single-stage input files
+
+When `run_config.single_stage_mode` is true, the runtime may replace the Stage 5 handoff
+and draft inputs with one current-run source artifact:
+
+- `run:input/source_post.md` for inline or provided Reddit post text.
+- `run:input/source_doc.md` after a Feishu URL has been fetched by the host action.
+
+The generator must normalize the ad-hoc source into canonical Stage 6a output,
+especially `06_optimized/native_posts.md` and `06_optimized/6a_handoff_packet.json`.
+
 ### Read order
 
 1. Required instruction files.
@@ -58,6 +69,8 @@ Read in order:
 
 - `05_optimized_cards/handoff_packet.json`
 - `05_optimized_cards/drafts_md/{post_id}.md` for chosen posts named in the Stage 5 handoff.
+- `input/source_post.md` only in ad-hoc native-rewrite runs.
+- `input/source_doc.md` only after current-run Feishu ingest.
 - `enter_output/skills/post-native-rewrite/EVALS.md`
 - `enter_output/skills/post-native-rewrite/OUTPUT_SCHEMA.json`
 - `enter_output/skills/post-native-rewrite/HANDOFF_SCHEMA.json`

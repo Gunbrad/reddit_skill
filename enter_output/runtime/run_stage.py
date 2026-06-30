@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import sys
 from pathlib import Path
 from typing import Any
@@ -10,6 +11,7 @@ if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from enter_output.runtime.artifacts import write_json
+from enter_output.runtime.intent_router import apply_intent_to_config, load_intent, stage_selection_from_intent
 from enter_output.runtime.model_client import ModelClient, create_model_client
 from enter_output.runtime.runner import DEFAULT_STAGE_ORDER, PipelineRunner, RunOptions
 
@@ -63,9 +65,18 @@ def run_with_client(
     max_retries: int = 5,
     resume: bool = False,
     feishu_url: str | None = None,
+    intent_path: Path | None = None,
+    source_text: Path | None = None,
+    dry_run_packet: bool = False,
 ) -> dict[str, Any]:
     repo_root = Path(repo_root)
     available = stage_order(repo_root)
+    intent = load_intent(intent_path) if intent_path else None
+    if intent:
+        intent_stage, intent_from, intent_to = stage_selection_from_intent(available, intent)
+        stage = stage or intent_stage
+        from_stage = from_stage or intent_from
+        to_stage = to_stage or intent_to
     selected = select_stages(available, stage=stage, from_stage=from_stage, to_stage=to_stage)
     if run_dir is None:
         runs_root = repo_root / "temp_output"
@@ -74,13 +85,15 @@ def run_with_client(
         run_dir = Path(run_dir)
         runs_root = run_dir.parent
         run_id = run_dir.name
-    config_path = _prepare_config(repo_root, run_dir, config_path, feishu_url)
+    config_path = _prepare_config(repo_root, run_dir, config_path, feishu_url, intent, source_text)
     runner = PipelineRunner(
         repo_root=repo_root,
         runs_root=runs_root,
         model_client=model_client,
         options=RunOptions(stage_order=selected, max_retries=max_retries),
     )
+    if dry_run_packet:
+        return runner.dry_run_packet(config_path, run_id=run_id)
     if resume:
         if not run_id:
             raise ValueError("--resume requires --run-dir")
@@ -99,6 +112,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-retries", type=int, default=5)
     parser.add_argument("--resume", action="store_true", help="Resume the run identified by --run-dir.")
     parser.add_argument("--feishu-url", help="Feishu document URL for single-stage Feishu/native rewrite tasks.")
+    parser.add_argument("--intent", help="Path to an intent JSON file.")
+    parser.add_argument("--source-text", help="Path to a local source text file for ad-hoc single-stage runs.")
+    parser.add_argument("--dry-run-packet", action="store_true", help="Write packet manifests without calling a model.")
     args = parser.parse_args(argv)
 
     repo_root = Path(__file__).resolve().parents[2]
@@ -114,22 +130,43 @@ def main(argv: list[str] | None = None) -> int:
         max_retries=args.max_retries,
         resume=args.resume,
         feishu_url=args.feishu_url,
+        intent_path=Path(args.intent) if args.intent else None,
+        source_text=Path(args.source_text) if args.source_text else None,
+        dry_run_packet=args.dry_run_packet,
     )
     print(json.dumps(status, ensure_ascii=False))
-    return 0 if status["status"] in {"completed", "stage_completed", "needs_external_action", "paused"} else 1
+    return 0 if status["status"] in {"completed", "stage_completed", "needs_external_action", "paused", "dry_run_packet"} else 1
 
 
-def _prepare_config(repo_root: Path, run_dir: Path | None, config_path: Path | None, feishu_url: str | None) -> Path:
+def _prepare_config(
+    repo_root: Path,
+    run_dir: Path | None,
+    config_path: Path | None,
+    feishu_url: str | None,
+    intent: dict[str, Any] | None,
+    source_text: Path | None,
+) -> Path:
     if config_path is None:
         config_path = repo_root / "enter_output" / "live_run" / "run_config.json"
-    if not feishu_url:
+    if not (feishu_url or intent or source_text):
         return config_path
     target_dir = run_dir or repo_root / "temp_output" / "_ad_hoc_config"
     target = target_dir / "run_config.json"
     data = json.loads(config_path.read_text(encoding="utf-8")) if config_path.exists() else {}
-    data["feishu_url"] = feishu_url
-    data["single_stage_mode"] = True
-    data["source_mode"] = "feishu_url"
+    if intent:
+        data = apply_intent_to_config(data, intent)
+    if feishu_url:
+        data["feishu_url"] = feishu_url
+        data["single_stage_mode"] = True
+        data["source_mode"] = "feishu_url"
+    if source_text:
+        source_text = Path(source_text)
+        target_source = target_dir / "input" / "source_post.md"
+        target_source.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source_text, target_source)
+        data["single_stage_mode"] = True
+        data["source_mode"] = "provided_file"
+        data["source_text_path"] = "input/source_post.md"
     write_json(target, data)
     return target
 

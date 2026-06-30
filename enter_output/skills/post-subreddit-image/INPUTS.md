@@ -35,6 +35,16 @@ Read in order:
 - `run:global/claim_boundary_table.json`
 - `run:global/brand_safety_rules.md`
 
+### Ad-hoc single-stage input files
+
+When `run_config.single_stage_mode` is true, the runtime may replace the Stage 6b
+canonical input with:
+
+- `run:input/checked_posts.md`
+
+The generator must normalize the ad-hoc source into canonical Stage 6c output,
+especially `06_optimized/final_posts.md` and `06_optimized/6c_handoff_packet.json`.
+
 ### Read order
 
 1. Required instruction files.
@@ -60,6 +70,7 @@ Read in order:
 
 - `06_optimized/checked_posts.md`
 - `06_optimized/6b_handoff_packet.json` if written by 6b.
+- `input/checked_posts.md` only in ad-hoc subreddit/image packaging runs.
 - `enter_output/skills/post-subreddit-image/EVALS.md`
 - `enter_output/skills/post-subreddit-image/IMAGE_PROMPT_EVALS.md`
 - `enter_output/skills/post-subreddit-image/OUTPUT_SCHEMA.json`

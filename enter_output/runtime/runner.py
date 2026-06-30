@@ -54,6 +54,11 @@ STAGE_HANDOFF_ALIASES = {
     "post-feishu-publish": "6d_handoff_packet.json",
 }
 
+FEISHU_READ_STAGES = {
+    "post-native-rewrite": ("input/source_doc.md",),
+    "feishu-formatting": ("07_format/live_doc_snapshot.md", "input/source_doc.md"),
+}
+
 
 @dataclass
 class RunOptions:
@@ -88,6 +93,32 @@ class PipelineRunner:
         state = self._load_or_create_state(run_id, run_dir, config)
         append_manifest(run_dir, f"- run started: `{run_id}`")
         return self._run_until_blocked(run_id, run_dir, config, state)
+
+    def dry_run_packet(self, config_path: Path, *, run_id: str | None = None) -> dict[str, Any]:
+        config_path = Path(config_path)
+        config = read_json(config_path)
+        if run_id is None:
+            run_id = self._new_run_id(config)
+        run_dir = self.runs_root / run_id
+        config = copy_config(config_path, run_dir)
+        stage = self.options.stage_order[0]
+        spec = self.prompt_builder.load_stage(stage)
+        generator_packet = self.prompt_builder.build_generator_packet(spec, run_dir, config)
+        write_json(run_dir / "generator_input_manifest.json", self.prompt_builder.packet_manifest(generator_packet, run_dir))
+        artifact_paths = sorted(declared_paths(spec.output_schema))
+        evaluator_packet = self.prompt_builder.build_evaluator_packet(spec, run_dir, artifact_paths, output={}, handoff={})
+        write_json(
+            run_dir / "evaluator_input_manifest.preview.json",
+            self.prompt_builder.packet_manifest(evaluator_packet, run_dir),
+        )
+        return {
+            "status": "dry_run_packet",
+            "run_id": run_id,
+            "run_dir": str(run_dir),
+            "stage": stage,
+            "generator_manifest": str(run_dir / "generator_input_manifest.json"),
+            "evaluator_manifest": str(run_dir / "evaluator_input_manifest.preview.json"),
+        }
 
     def resume(self, run_id: str) -> dict[str, Any]:
         run_dir = self.runs_root / run_id
@@ -134,6 +165,9 @@ class PipelineRunner:
         stage: str,
     ) -> dict[str, Any]:
         spec = self.prompt_builder.load_stage(stage)
+        feishu_ingest = self._maybe_pause_for_feishu_ingest(run_id, run_dir, config, state, stage)
+        if feishu_ingest is not None:
+            return feishu_ingest
         packet = self.prompt_builder.build_generator_packet(spec, run_dir, config)
         stage_dir = run_dir / spec.output_dir
         write_json(stage_dir / "input_manifest.json", packet)
@@ -196,12 +230,23 @@ class PipelineRunner:
                     + json.dumps(failure_report, ensure_ascii=False, indent=2),
                 }
             ]
+        generator_metadata = {"output_schema": spec.output_schema, "handoff_schema": spec.handoff_schema}
         generator_response = self.model_client.complete(
             messages,
             kind="generator",
             stage=spec.name,
             attempt=attempt,
-            metadata={"output_schema": spec.output_schema, "handoff_schema": spec.handoff_schema},
+            metadata=generator_metadata,
+        )
+        write_json(
+            runtime_dir / "generator_request_manifest.json",
+            self.prompt_builder.packet_manifest(
+                packet,
+                run_dir,
+                request_id=generator_response.request_id,
+                attempt=attempt,
+                metadata=generator_metadata,
+            ),
         )
         write_json(
             runtime_dir / "generator_raw_response.json",
@@ -236,7 +281,13 @@ class PipelineRunner:
             return {"status": "artifact_missing", "missing": missing_files}
 
         artifact_paths = sorted(declared_paths(output))
-        eval_packet = self.prompt_builder.build_evaluator_packet(spec, run_dir, artifact_paths)
+        eval_packet = self.prompt_builder.build_evaluator_packet(
+            spec,
+            run_dir,
+            artifact_paths,
+            output=output,
+            handoff=handoff,
+        )
         write_json(runtime_dir / "eval_input_manifest.json", eval_packet)
         missing_eval_instructions = self.prompt_builder.missing_mandatory_files(eval_packet, run_dir)
         if missing_eval_instructions:
@@ -244,12 +295,23 @@ class PipelineRunner:
         missing_eval_inputs = self.prompt_builder.missing_business_inputs(eval_packet, run_dir)
         if missing_eval_inputs:
             return {"status": "missing_eval_input", "missing": missing_eval_inputs}
+        evaluator_metadata = {"output_schema": spec.output_schema}
         evaluator_response = self.model_client.complete(
             self.prompt_builder.messages_for_packet(eval_packet, run_dir),
             kind="evaluator",
             stage=spec.name,
             attempt=attempt,
-            metadata={"output_schema": spec.output_schema},
+            metadata=evaluator_metadata,
+        )
+        write_json(
+            runtime_dir / "evaluator_request_manifest.json",
+            self.prompt_builder.packet_manifest(
+                eval_packet,
+                run_dir,
+                request_id=evaluator_response.request_id,
+                attempt=attempt,
+                metadata=evaluator_metadata,
+            ),
         )
         write_json(
             runtime_dir / "eval_raw_response.json",
@@ -393,7 +455,29 @@ class PipelineRunner:
                     "action_id": action_id,
                     "action_manifest": action_state["manifest_path"],
                     "result_file": str(run_dir / manifest["result_file"]),
+                    "action_type": manifest.get("action_type"),
+                    "expected_artifact": manifest.get("expected_artifact"),
                 }
+            if action_state.get("pre_stage"):
+                expected_artifact = action_state.get("expected_artifact") or manifest.get("expected_artifact")
+                if expected_artifact and not (run_dir / expected_artifact).exists():
+                    return {
+                        "status": "needs_external_action",
+                        "run_id": run_id,
+                        "stage": action_state["stage"],
+                        "action_id": action_id,
+                        "action_manifest": action_state["manifest_path"],
+                        "result_file": str(run_dir / manifest["result_file"]),
+                        "action_type": manifest.get("action_type"),
+                        "expected_artifact": expected_artifact,
+                    }
+                action_state["status"] = "completed"
+                action_state["result"] = read_action_result(run_dir, manifest)
+                state.get("stages", {}).pop(action_state["stage"], None)
+                state["status"] = "running"
+                append_manifest(run_dir, f"- external action completed before `{action_state['stage']}`: {action_id}")
+                self._save_state(run_dir, state)
+                continue
             action_state["status"] = "completed"
             action_state["result"] = read_action_result(run_dir, manifest)
             stage_state = state["stages"][action_state["stage"]]
@@ -426,6 +510,72 @@ class PipelineRunner:
                 append_manifest(run_dir, f"- search placeholder completed for `{stage}`")
                 self._save_state(run_dir, state)
         return None
+
+    def _maybe_pause_for_feishu_ingest(
+        self,
+        run_id: str,
+        run_dir: Path,
+        config: dict[str, Any],
+        state: dict[str, Any],
+        stage: str,
+    ) -> dict[str, Any] | None:
+        if config.get("source_mode") != "feishu_url" or stage not in FEISHU_READ_STAGES:
+            return None
+        feishu_url = config.get("feishu_url")
+        if not feishu_url:
+            return None
+        expected_artifact = _expected_feishu_artifact(stage, run_dir, config)
+        if expected_artifact is None or (run_dir / expected_artifact).exists():
+            return None
+
+        pending = _pending_pre_stage_action(state, stage, "feishu.read_document")
+        if pending:
+            manifest = read_json(Path(pending["manifest_path"]))
+            return {
+                "status": "needs_external_action",
+                "run_id": run_id,
+                "stage": stage,
+                "action_id": manifest["action_id"],
+                "action_type": manifest.get("action_type"),
+                "action_manifest": pending["manifest_path"],
+                "result_file": str(run_dir / manifest["result_file"]),
+                "expected_artifact": expected_artifact,
+            }
+
+        action = {
+            "action_id": "feishu_read",
+            "action_type": "feishu.read_document",
+            "feishu_url": feishu_url,
+            "result_file": "actions/feishu_read.result.json",
+            "expected_artifact": expected_artifact,
+        }
+        created = create_action_manifest(run_dir, action)
+        manifest = created["manifest"]
+        state["status"] = "needs_external_action"
+        state.setdefault("stages", {})[stage] = {
+            "status": "waiting_external_action",
+            "reason": "feishu_ingest_required",
+        }
+        state.setdefault("external_actions", {})[manifest["action_id"]] = {
+            "status": "pending",
+            "stage": stage,
+            "manifest_path": created["manifest_path"],
+            "result_file": manifest["result_file"],
+            "expected_artifact": expected_artifact,
+            "pre_stage": True,
+        }
+        self._save_state(run_dir, state)
+        append_manifest(run_dir, f"- Feishu ingest required before `{stage}`")
+        return {
+            "status": "needs_external_action",
+            "run_id": run_id,
+            "stage": stage,
+            "action_id": manifest["action_id"],
+            "action_type": manifest["action_type"],
+            "action_manifest": created["manifest_path"],
+            "result_file": str(run_dir / manifest["result_file"]),
+            "expected_artifact": expected_artifact,
+        }
 
     def _fail_stage(
         self,
@@ -594,3 +744,30 @@ def _load_6a_viral_intent(stage_dir: Path) -> list[dict[str, Any]]:
 def _slugify(value: str) -> str:
     slug = re.sub(r"[^A-Za-z0-9_-]+", "-", value.strip().lower()).strip("-_")
     return slug or "project"
+
+
+def _expected_feishu_artifact(stage: str, run_dir: Path, config: dict[str, Any]) -> str | None:
+    explicit = config.get("expected_artifact")
+    if explicit:
+        return explicit
+    candidates = FEISHU_READ_STAGES.get(stage, ())
+    if stage == "feishu-formatting":
+        for candidate in candidates:
+            if (run_dir / candidate).exists():
+                return None
+    return candidates[0] if candidates else None
+
+
+def _pending_pre_stage_action(state: dict[str, Any], stage: str, action_type: str) -> dict[str, Any] | None:
+    for action_state in state.get("external_actions", {}).values():
+        if action_state.get("status") != "pending":
+            continue
+        if action_state.get("stage") != stage or not action_state.get("pre_stage"):
+            continue
+        try:
+            manifest = read_json(Path(action_state["manifest_path"]))
+        except (OSError, ValueError, KeyError):
+            continue
+        if manifest.get("action_type") == action_type:
+            return action_state
+    return None
