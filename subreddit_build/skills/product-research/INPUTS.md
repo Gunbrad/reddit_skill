@@ -17,7 +17,6 @@ Read in order:
 3. `repo:subreddit_build/skills/subreddit-build-workflow/WORKER_CONTRACT.md`
 4. `repo:subreddit_build/skills/subreddit-build-workflow/conventions.md`
 5. `repo:subreddit_build/skills/product-research/SKILL.md`
-6. `workspace:reddit/接口test/帖子native化/评价体系.md`
 
 ### Optional instruction files
 

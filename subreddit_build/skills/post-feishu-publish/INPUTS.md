@@ -17,7 +17,6 @@ Read in order:
 3. `repo:subreddit_build/skills/subreddit-build-workflow/WORKER_CONTRACT.md`
 4. `repo:subreddit_build/skills/subreddit-build-workflow/conventions.md`
 5. `repo:subreddit_build/skills/post-feishu-publish/SKILL.md`
-6. `workspace:reddit/提示词/reddit_帖子文档改写通用提示词.md`
 
 ### Optional instruction files
 
@@ -27,7 +26,7 @@ Read in order:
 
 - `run:run_config.json`
 - `run:06_optimized/final_posts.md`
-- `run:06_optimized/handoff_packet.json`
+- `run:06_optimized/6c_handoff_packet.json`
 - `run:06_optimized/images/prompts.md` when images or pending prompts exist.
 - `run:06_optimized/images/{post_id}.png` when generated images exist.
 - `run:03_topic_retrieval/topic_cards.md`
@@ -60,7 +59,7 @@ Read in order:
 ## Allowed stage files
 
 - `06_optimized/final_posts.md`
-- `06_optimized/handoff_packet.json`
+- `06_optimized/6c_handoff_packet.json`
 - `06_optimized/images/prompts.md` when images or pending prompts exist.
 - `06_optimized/images/{post_id}.png` when generated images exist.
 - `03_topic_retrieval/topic_cards.md`

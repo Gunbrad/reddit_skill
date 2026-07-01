@@ -6,8 +6,7 @@
 
 You are the Stage 6a post-native-rewrite generator worker. Rewrite chosen drafts into
 Reddit-native Title, Body, and comment designs while preserving every Stage 5 `viral_intent`
-field. Also enforce compressed fact/brand boundaries and write `06_optimized/final_posts.md`
-for Feishu publishing. Native but flattened is a failure.
+field. Native but flattened is a failure.
 
 ### Required instruction files
 
@@ -18,9 +17,6 @@ Read in order:
 3. `repo:subreddit_build/skills/subreddit-build-workflow/WORKER_CONTRACT.md`
 4. `repo:subreddit_build/skills/subreddit-build-workflow/conventions.md`
 5. `repo:subreddit_build/skills/post-native-rewrite/SKILL.md`
-6. `workspace:reddit/提示词/reddit_帖子文档改写通用提示词.md`
-7. `workspace:reddit/提示词/爆帖拆解复刻提示词.md`
-8. `workspace:reddit/接口test/帖子native化/评价体系.md`
 
 ### Optional instruction files
 
@@ -46,7 +42,8 @@ Read in order:
 
 ### Allowed extra reads
 
-- None by default. Do not open Stage 3 retrieval internals, all topic cards, or unchosen drafts.
+- None by default. Do not open Stage 3 retrieval internals, Stage 4 mechanism-selection detail,
+  all topic cards, or unchosen drafts.
 
 ## Allowed global files
 
@@ -74,5 +71,5 @@ Read in order:
 - `01_product_brief/product_brief.md`.
 - All topic cards when only chosen drafts are needed.
 - All drafts when only selected `post_id` drafts are needed.
-- Feishu publishing artifacts before they are approved.
+- Stage 6b/6c/6d artifacts before they are approved.
 

@@ -1,14 +1,13 @@
 ﻿# EVALS — Post Native Rewrite (Stage 6a) — the core de-AI / native system
 
 Run by a SEPARATE evaluator worker (EVAL_WORKER_CONTRACT.md), per post, on
-`06_optimized/native_posts.md` and `06_optimized/final_posts.md`. The evaluator also reads the
-Stage 5 `handoff_packet.json` and compressed fact/brand files to verify viral intent and safety
-survived. **Blocking** must pass.
+`06_optimized/native_posts.md`. The evaluator also reads the Stage 5 `handoff_packet.json` to
+verify viral intent survived. **Blocking** must pass.
 Threshold: all blocking pass AND de-AI total ≥ 85/100 (higher bar than other stages).
 
-Four sub-systems here: (VP) viral-intent preserved, (A) de-AI/native Title+Body,
-(B) comment-section nativeness, and (F) fact/brand safety. This workflow has no separate 6b,
-so F is blocking here.
+Three sub-systems here: (VP) viral-intent preserved, (A) de-AI/native Title+Body,
+(B) comment-section nativeness. (Brand-safety, facts, images, subreddits, Feishu are scored in
+6b/6c/6d, not here.)
 
 ---
 
@@ -74,36 +73,23 @@ de-AI'd at the cost of its breakout potential. Send back to a fresh rewrite work
 
 ---
 
-## F. Fact and brand safety (BLOCKING in subreddit_build)
-
-| # | Criterion | Blocking | Pass condition |
-|---|-----------|:---:|----------------|
-| F1 | Verified claims only | ✅ | Every product claim in title/body/comments is supported by `product_fact_index.json`; unverified/forbidden claims are removed or hedged as unknown |
-| F2 | Brand is not a pitch | ✅ | Brand appears as a light, stumbled-on option; no feature dump or CTA |
-| F3 | Mention count controlled | ✅ | Body and comments together keep brand exposure sparse; comments do not sell the product |
-| F4 | Disclosure/safety | ✅ | Where recommendation/comparison framing requires disclosure or caution, the post is calibrated and not deceptive |
-| F5 | `final_posts.md` ready | ✅ | `06_optimized/final_posts.md` exists and matches the approved native content structure |
-
----
-
 ## Failure → action
 
-- Any VP/A/B/F blocking fail → rewrite that post and re-score (fresh evaluator worker); do NOT hand off to Feishu publishing.
+- Any VP/A/B blocking fail → rewrite that post and re-score (fresh evaluator worker); do NOT hand off to 6b.
 - VP1–VP4 fail → restore the lost hook/trigger/detail/comment-engine from the Stage 5
   `handoff_packet.json` while keeping the native voice; native-but-flattened is not acceptable.
 - AT5 fail → add/rewrite 备用标题 until ≥3, each passing A-Title rules with varied angles.
 - AB9/B8 (Chinglish) fail → rewrite the offending lines into native English.
 - Score < 85 even with blocking passing → keep de-AI'ing the weakest A/B items (slang ≤3/para,
   typo rate 1-3%, spoken syntax — conventions.md §4b).
-- F fail → remove overclaims, reduce brand exposure, or rewrite ad-like comments before publishing.
-- Record per-post VP/A/B/F scores in `run_manifest.md`.
+- Record per-post VP/A/B scores in `run_manifest.md`.
 
 ## Reviewer prompt (MANDATORY evaluator worker — run this BLIND; EVAL_WORKER_CONTRACT.md)
 
 Under isolated-worker execution this reviewer runs as a separate evaluator worker; it is NOT
 optional. If the runtime has no subagents, emulate with a fresh evaluation session given only
-the artifact, this EVALS.md, OUTPUT_SCHEMA.json, the minimal fact index/brand rules, and the
-Stage 5 handoff_packet.json. Do NOT tell it the product is the client's.
+the artifact, this EVALS.md, OUTPUT_SCHEMA.json, the minimal fact index, and the Stage 5
+handoff_packet.json. Do NOT tell it the product is the client's.
 
 "You are a long-time Reddit user with a strong nose for marketing. Read this post and its
 comments. (1) Does it read like a real person or like an ad / AI? Point to specific AI tells:
@@ -111,7 +97,6 @@ checklist structure, feature dumps, stacked closing questions, no doubt, formal 
 (2) Do the comments feel like different real people disagreeing, or a script that all serves
 the product? (3) Any Chinglish or forced slang? (4) Given this 'intended hook / emotional
 trigger / must-keep details / comment engine' [from the handoff packet], did the post KEEP
-them, or did it get flattened into something safe but boring? (5) Does any product claim exceed
-the fact index or make the brand look like a pitch? List every tell and every lost hook. Would
-this get called out as an ad in a subreddit — and would it actually get upvotes?"
+them, or did it get flattened into something safe but boring? List every tell and every lost
+hook. Would this get called out as an ad in a subreddit — and would it actually get upvotes?"
 

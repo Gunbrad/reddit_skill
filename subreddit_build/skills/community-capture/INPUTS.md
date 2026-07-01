@@ -6,7 +6,8 @@
 
 You are the Stage 2 community-capture generator worker. Configure the SmartContent community
 builder project, start the long crawl, poll with heartbeat evidence, download artifacts, and
-record successful and failed communities. Do not补抓 failed subreddits.
+record successful and failed communities. Do not补抓 failed subreddits. Produce community
+insights as a hard downstream context artifact for every successful subreddit.
 
 ### Required instruction files
 
@@ -18,7 +19,6 @@ Read in order:
 4. `repo:subreddit_build/skills/subreddit-build-workflow/conventions.md`
 5. `repo:subreddit_build/skills/subreddit-build-workflow/PIPELINE_CONTRACT.md`
 6. `repo:subreddit_build/skills/community-capture/SKILL.md`
-7. `workspace:reddit/接口test/新工作流接口测试/smartcontent_社区建设功能_API接口文档.md`
 
 ### Optional instruction files
 

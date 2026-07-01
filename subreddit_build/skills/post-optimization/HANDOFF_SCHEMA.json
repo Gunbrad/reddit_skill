@@ -1,0 +1,66 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 6 Handoff Packet",
+  "type": "object",
+  "required": ["stage_id", "status", "inputs_read", "outputs", "eval_result", "open_questions"],
+  "properties": {
+    "stage_id": { "const": "stage_6_post_optimization" },
+    "status": { "enum": ["draft", "pass", "fail"] },
+    "inputs_read": { "type": "array", "items": { "type": "string" } },
+    "outputs": {
+      "type": "object",
+      "required": ["final_posts_path", "feishu_links_path", "post_doc_url", "image_doc_url", "viral_intent_preservation", "sub_stage_verdicts"],
+      "properties": {
+        "final_posts_path": { "const": "06_optimized/final_posts.md" },
+        "feishu_links_path": { "const": "06_optimized/feishu_links.md" },
+        "post_doc_url": { "type": "string" },
+        "image_doc_url": { "type": ["string", "null"] },
+        "viral_intent_preservation": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["post_id", "core_hook", "emotional_trigger", "comment_engine", "must_preserve", "verdict"],
+            "properties": {
+              "post_id": { "type": "string" },
+              "core_hook": { "type": "string" },
+              "emotional_trigger": { "type": "string" },
+              "comment_engine": { "type": "string" },
+              "must_preserve": { "type": "array", "items": { "type": "string" } },
+              "verdict": { "enum": ["pass", "fail"] }
+            },
+            "additionalProperties": false
+          }
+        },
+        "sub_stage_verdicts": {
+          "type": "array",
+          "minItems": 4,
+          "items": {
+            "type": "object",
+            "required": ["sub_stage_id", "artifact_path", "eval_verdict"],
+            "properties": {
+              "sub_stage_id": { "enum": ["6a_content_optimization", "6b_fact_brand_check", "6c_subreddit_image_packaging", "6d_feishu_publish"] },
+              "artifact_path": { "type": "string" },
+              "eval_verdict": { "enum": ["pass", "fail"] }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "eval_result": {
+      "type": "object",
+      "required": ["blocking", "score", "retry_needed", "verdict"],
+      "properties": {
+        "blocking": { "enum": ["pass", "fail"] },
+        "score": { "type": "number" },
+        "retry_needed": { "type": "boolean" },
+        "verdict": { "enum": ["pass", "fail"] }
+      },
+      "additionalProperties": true
+    },
+    "open_questions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}
+

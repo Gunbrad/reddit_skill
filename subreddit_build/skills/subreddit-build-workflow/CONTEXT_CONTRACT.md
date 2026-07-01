@@ -12,8 +12,9 @@ Workers receive minimal context. A stage worker may read only:
 - Run generator and evaluator as isolated workers, child tasks, fresh sessions, or equivalent.
 - If no isolation mechanism exists, emulate isolation with a fresh task that receives only the
   `stage_input_packet`; record this fallback in `run_manifest.md`.
-- Worker depth is `1` by default. No stage worker may spawn its own workers unless the
-  orchestrator explicitly permits it for Feishu tooling.
+- Worker depth is `1` by default. No stage worker may spawn its own workers unless it is the
+  Stage 6 `post-optimization` coordinator launching 6a/6b/6c/6d, or the orchestrator explicitly
+  permits it for Feishu tooling.
 
 ## Forbidden By Default
 
@@ -26,3 +27,16 @@ Workers receive minimal context. A stage worker may read only:
 
 Downstream stages read compressed global fact files instead of the full product brief unless
 their `INPUTS.md` explicitly allows a brief read and the reason is logged.
+
+## Community Insight Context
+
+`02_community_capture/artifacts/community_insights.json` is the canonical compact community
+analysis artifact. It may be read only by:
+
+- Stage 3 `community-topic-retrieval`, to ground retrieval and Topic Cards.
+- Stage 4 `mechanism-variant-selection`, to choose mechanisms that fit subreddit behavior and risk.
+- Stage 5 `community-card-draft-generation`, to write per-card supplemental context and risk notes.
+
+Stage 6 and Stage 7 must not read community insights directly. They inherit only the compressed
+per-post `viral_intent`, `subreddit_risk_note`, selected mechanism, and claim boundaries in the
+approved Stage 5 handoff.

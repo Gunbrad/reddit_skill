@@ -9,7 +9,7 @@
     "inputs_read": { "type": "array", "items": { "type": "string" } },
     "outputs": {
       "type": "object",
-      "required": ["project_id", "run_id", "round_id", "applied_variants", "mechanism_selection", "topic_cards_json", "topic_doc_url"],
+      "required": ["project_id", "run_id", "round_id", "applied_variants", "mechanism_selection", "topic_cards_json", "community_insights_json", "topic_doc_url"],
       "properties": {
         "project_id": { "type": "string" },
         "run_id": { "type": "string" },
@@ -19,6 +19,7 @@
         "mechanism_selection": { "const": "04_mechanism_selection/mechanism_selection.md" },
         "topic_cards_json": { "const": "03_topic_retrieval/topic_cards.json" },
         "reference_post_cards": { "const": "03_topic_retrieval/reference_post_cards.json" },
+        "community_insights_json": { "const": "02_community_capture/artifacts/community_insights.json" },
         "topic_doc_url": { "type": "string" }
       },
       "additionalProperties": false

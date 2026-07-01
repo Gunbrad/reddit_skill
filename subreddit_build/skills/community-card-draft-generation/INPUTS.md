@@ -6,8 +6,8 @@
 
 You are the Stage 5 community-card-draft-generation generator worker. Rank applied Topic Cards,
 choose TopN, write per-card supplemental contexts that copy the original topic direction and
-add suitable notes, choose length, create and poll draft jobs, save drafts, and write a
-structured viral-intent handoff for native rewrite.
+add suitable notes grounded in community insights, choose a job-level length multiplier, create
+and poll draft jobs, save drafts, and write a structured viral-intent handoff for native rewrite.
 
 ### Required instruction files
 
@@ -19,7 +19,6 @@ Read in order:
 4. `repo:subreddit_build/skills/subreddit-build-workflow/conventions.md`
 5. `repo:subreddit_build/skills/subreddit-build-workflow/PIPELINE_CONTRACT.md`
 6. `repo:subreddit_build/skills/community-card-draft-generation/SKILL.md`
-7. `workspace:reddit/接口test/新工作流接口测试/smartcontent_社区建设功能_API接口文档.md`
 
 ### Optional instruction files
 
@@ -35,6 +34,7 @@ Read in order:
 - `run:03_topic_retrieval/reference_post_cards.json`
 - `run:03_topic_retrieval/feishu_links.md`
 - `run:02_community_capture/artifacts/content_maps.json`
+- `run:02_community_capture/artifacts/community_insights.json`
 - `run:global/product_fact_index.json`
 - `run:global/claim_boundary_table.json`
 - `run:global/brand_safety_rules.md`
@@ -69,6 +69,7 @@ Read in order:
 - `03_topic_retrieval/reference_post_cards.json`
 - `03_topic_retrieval/feishu_links.md`
 - `02_community_capture/artifacts/content_maps.json`
+- `02_community_capture/artifacts/community_insights.json`
 - Files created under `05_optimized_cards/`.
 
 ## Forbidden files

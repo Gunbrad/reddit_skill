@@ -40,7 +40,10 @@ $stageDirs = @(
   'community-topic-retrieval',
   'mechanism-variant-selection',
   'community-card-draft-generation',
+  'post-optimization',
   'post-native-rewrite',
+  'post-fact-brand-check',
+  'post-subreddit-image',
   'post-feishu-publish',
   'feishu-formatting'
 )
@@ -70,7 +73,10 @@ Require-Text (Join-Path $Root 'README.md') 'subreddit_build/README.md' @(
   'community-capture',
   'community-topic-retrieval',
   'mechanism-variant-selection',
-  'community-card-draft-generation'
+  'community-card-draft-generation',
+  'post-optimization',
+  'post-fact-brand-check',
+  'post-subreddit-image'
 )
 
 Require-Text (Join-Path $workflowRoot 'PIPELINE_CONTRACT.md') 'PIPELINE_CONTRACT.md' @(
@@ -79,6 +85,10 @@ Require-Text (Join-Path $workflowRoot 'PIPELINE_CONTRACT.md') 'PIPELINE_CONTRACT
   '03_topic_retrieval',
   '04_mechanism_selection',
   '05_optimized_cards',
+  'community_insights',
+  'post-optimization',
+  'post-fact-brand-check',
+  'post-subreddit-image',
   '06_optimized/final_posts.md',
   '07_format',
   'do not'
@@ -140,28 +150,46 @@ foreach ($stage in $stageDirs) {
 
 Require-Text (Join-Path $skillsRoot 'community-capture\SKILL.md') 'community-capture/SKILL.md' @(
   'community_builder_rpa_init',
-  'does not'
+  'does not',
+  'community_insights'
 )
 Require-Text (Join-Path $skillsRoot 'community-topic-retrieval\SKILL.md') 'community-topic-retrieval/SKILL.md' @(
   'retrieval/search',
   'topic-cards/generate',
-  'Feishu'
+  'Feishu',
+  'community_insights'
 )
 Require-Text (Join-Path $skillsRoot 'mechanism-variant-selection\SKILL.md') 'mechanism-variant-selection/SKILL.md' @(
   '8 mechanisms',
-  'apply'
+  'apply',
+  'community_insights'
 )
 Require-Text (Join-Path $skillsRoot 'community-card-draft-generation\SKILL.md') 'community-card-draft-generation/SKILL.md' @(
   'supplemental_context',
   'length_multiplier',
-  'viral_intent'
+  'viral_intent',
+  'community_insights'
 )
 Require-Text (Join-Path $skillsRoot 'post-native-rewrite\OUTPUT_SCHEMA.json') 'post-native-rewrite/OUTPUT_SCHEMA.json' @(
+  '06_optimized/native_posts.md'
+)
+Require-Text (Join-Path $skillsRoot 'post-optimization\SKILL.md') 'post-optimization/SKILL.md' @(
+  'Stage 6 coordinator',
+  'post-native-rewrite',
+  'post-fact-brand-check',
+  'post-subreddit-image',
+  'post-feishu-publish'
+)
+Require-Text (Join-Path $skillsRoot 'post-fact-brand-check\OUTPUT_SCHEMA.json') 'post-fact-brand-check/OUTPUT_SCHEMA.json' @(
+  '06_optimized/checked_posts.md'
+)
+Require-Text (Join-Path $skillsRoot 'post-subreddit-image\OUTPUT_SCHEMA.json') 'post-subreddit-image/OUTPUT_SCHEMA.json' @(
   '06_optimized/final_posts.md'
 )
 Require-Text (Join-Path $skillsRoot 'post-feishu-publish\INPUTS.md') 'post-feishu-publish/INPUTS.md' @(
   '03_topic_retrieval/feishu_links.md',
-  '06_optimized/final_posts.md'
+  '06_optimized/final_posts.md',
+  '06_optimized/6c_handoff_packet.json'
 )
 
 if ($failures.Count -gt 0) {

@@ -1,0 +1,25 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 6c Subreddit Image Handoff",
+  "type": "object",
+  "required": ["stage_id", "status", "inputs_read", "outputs", "eval_result", "open_questions"],
+  "properties": {
+    "stage_id": { "const": "stage_6c_post_subreddit_image" },
+    "status": { "enum": ["draft", "pass", "fail"] },
+    "inputs_read": { "type": "array", "items": { "type": "string" } },
+    "outputs": {
+      "type": "object",
+      "required": ["final_posts_path", "image_summary"],
+      "properties": {
+        "final_posts_path": { "const": "06_optimized/final_posts.md" },
+        "image_summary": { "type": "string" },
+        "image_prompts_path": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "eval_result": { "type": "object", "required": ["blocking", "score", "retry_needed", "verdict"], "additionalProperties": true },
+    "open_questions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}
+

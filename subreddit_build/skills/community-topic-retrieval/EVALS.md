@@ -20,7 +20,7 @@ and schemas. Blocking criteria must pass before mechanism generation.
 | B1 | Count valid | ✅ | Generated count is 12, 18, or 24 according to config/user selection |
 | B2 | Required fields present | ✅ | Each card has title direction, content form, post format, mechanism, brand exposure, source ids, target subreddit |
 | B3 | Grounded in retrieved cards | ✅ | Each card cites at least one source card or clear reference logic from retrieval |
-| B4 | Community-map fit | ✅ | Cards reflect captured community positioning, themes, content forms, motivations, or risks |
+| B4 | Community insight fit | ✅ | Cards reflect `community_insights` positioning, high-frequency themes, content forms, motivations, transferable patterns, or risks |
 | B5 | Varied angles | ⬜ | Cards are not near-duplicates of the same hook/post format |
 | B6 | Not ad-heavy | ✅ | Brand exposure is natural and light; no card is a direct product pitch |
 
@@ -41,6 +41,6 @@ and schemas. Blocking criteria must pass before mechanism generation.
 ## Reviewer prompt (MANDATORY evaluator worker)
 
 "Review Stage 3 retrieval and Topic Cards. Does the retrieval query match the user's topic
-requirement and return saved reference cards? Are Topic Cards grounded in retrieved posts and
-community maps, with required fields, valid count, varied angles, and non-ad brand exposure?
+requirement and return saved reference cards? Are Topic Cards grounded in retrieved posts,
+community maps, and community_insights, with required fields, valid count, varied angles, and non-ad brand exposure?
 Was the Topic Card set written to a Feishu doc with no secrets? List all blocking issues."

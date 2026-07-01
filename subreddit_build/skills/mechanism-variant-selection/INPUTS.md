@@ -6,7 +6,8 @@
 
 You are the Stage 4 mechanism-variant-selection generator worker. For every Topic Card,
 generate 8 mechanism variants, select the best one using Reddit-native and brand-safety
-criteria, apply it through the API, and write the full selection rationale.
+criteria plus Stage 2 community insights, apply it through the API, confirm the selected
+variant is the API `active_variant_id`, and write the full scoring matrix and rationale.
 
 ### Required instruction files
 
@@ -18,7 +19,6 @@ Read in order:
 4. `repo:subreddit_build/skills/subreddit-build-workflow/conventions.md`
 5. `repo:subreddit_build/skills/subreddit-build-workflow/PIPELINE_CONTRACT.md`
 6. `repo:subreddit_build/skills/mechanism-variant-selection/SKILL.md`
-7. `workspace:reddit/接口test/新工作流接口测试/smartcontent_社区建设功能_API接口文档.md`
 
 ### Optional instruction files
 
@@ -31,6 +31,7 @@ Read in order:
 - `run:03_topic_retrieval/topic_cards.json`
 - `run:03_topic_retrieval/reference_post_cards.json`
 - `run:02_community_capture/artifacts/content_maps.json`
+- `run:02_community_capture/artifacts/community_insights.json`
 - `run:global/product_fact_index.json`
 - `run:global/claim_boundary_table.json`
 - `run:global/brand_safety_rules.md`
@@ -61,6 +62,7 @@ Read in order:
 - `03_topic_retrieval/topic_cards.json`
 - `03_topic_retrieval/reference_post_cards.json`
 - `02_community_capture/artifacts/content_maps.json`
+- `02_community_capture/artifacts/community_insights.json`
 - Files created under `04_mechanism_selection/`.
 
 ## Forbidden files

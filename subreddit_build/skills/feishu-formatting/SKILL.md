@@ -1,6 +1,6 @@
 ﻿---
 name: feishu-formatting
-description: Use as the final step after optimized posts are in a Feishu doc, when applying the Feishu Reddit-post layout standard (h1/h2 structure, comment reformatting, User-X renaming, brand highlight, OP-reply removal), or when a Feishu post draft needs its formatting normalized. Stage 7 of the Reddit posting pipeline.
+description: Use as the final step after optimized posts are in a Feishu doc, when applying the Feishu Reddit-post layout standard (h1/h2 structure, comment reformatting, User-X renaming, brand highlight, OP-reply removal), or when a Feishu post draft needs its formatting normalized. Stage 7 of the subreddit build workflow.
 ---
 
 # Feishu Formatting + Comment Normalization (Stage 7)

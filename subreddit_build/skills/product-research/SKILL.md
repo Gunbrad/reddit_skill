@@ -1,6 +1,6 @@
 ﻿---
 name: product-research
-description: Use when starting a new client product before any Reddit posting, when you have raw product facts (official site, client docs) and need a structured product brief, or when a downstream stage reports the product brief is missing or thin. Stage 1 of the Reddit posting pipeline.
+description: Use when starting a new client product before a subreddit build workflow, when you have raw product facts (official site, client docs) and need a structured product brief, or when a downstream stage reports the product brief is missing or thin. Stage 1 of the subreddit build workflow.
 ---
 
 # Product Research → Product Brief (Stage 1)
@@ -139,7 +139,7 @@ For every competitor also record 用户画像 + 定价 (or "未公开" if unknow
    as unverified/forbidden. These are what stages 2–7 read by default.
 8. Run EVALS (see EVALS.md). Revise until blocking criteria pass.
 9. Write `01_product_brief/handoff_packet.json` (per HANDOFF_SCHEMA.json). Log verdict + paths
-   in `run_manifest.md`. Hand off to `topic-selection`.
+   in `run_manifest.md`. Hand off to `community-capture`.
 
 ## Common mistakes
 

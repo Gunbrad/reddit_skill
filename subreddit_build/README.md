@@ -35,7 +35,10 @@ skills/
   community-topic-retrieval/
   mechanism-variant-selection/
   community-card-draft-generation/
+  post-optimization/
   post-native-rewrite/
+  post-fact-brand-check/
+  post-subreddit-image/
   post-feishu-publish/
   feishu-formatting/
 ```
@@ -51,13 +54,22 @@ Each stage directory includes:
 ## Canonical Stages
 
 1. `product-research` writes `01_product_brief/product_brief.md` plus compressed global fact files.
-2. `community-capture` creates/updates the SmartContent project, starts the community crawl, waits for completion, and downloads community artifacts.
-3. `community-topic-retrieval` creates the retrieval round, generates Topic Cards, and writes the topic Feishu doc.
-4. `mechanism-variant-selection` generates one 8-item mechanism batch per Topic Card, selects the best variant, and applies it.
-5. `community-card-draft-generation` chooses TopN cards, writes per-card supplemental contexts with the original topic copied in, chooses length, and generates drafts.
-6. `post-native-rewrite` de-AIs and native-rewrites the generated drafts into publish-ready Reddit posts.
-7. `post-feishu-publish` writes the final posts into Feishu using CLI/Lark tooling.
-8. `feishu-formatting` normalizes the Feishu document layout and verifies final formatting.
+2. `community-capture` creates/updates the SmartContent project, starts the community crawl, waits for completion, downloads community artifacts, and emits `community_insights.json/md`.
+3. `community-topic-retrieval` creates the retrieval round, generates Topic Cards grounded in retrieved cards plus `community_insights`, and writes the topic Feishu doc.
+4. `mechanism-variant-selection` generates one 8-item mechanism batch per Topic Card, selects the best variant using community insights, and applies it.
+5. `community-card-draft-generation` chooses TopN cards, writes per-card supplemental contexts with the original topic copied in plus community insight refs, chooses length, and generates drafts.
+6. `post-optimization` coordinates four sub-stages:
+   - `post-native-rewrite` (6a) de-AIs and native-rewrites chosen drafts into `native_posts.md`.
+   - `post-fact-brand-check` (6b) checks claims and brand exposure into `checked_posts.md`.
+   - `post-subreddit-image` (6c) packages target subreddits and optional images into `final_posts.md`.
+   - `post-feishu-publish` (6d) writes the final posts into Feishu using CLI/Lark tooling.
+7. `feishu-formatting` normalizes the Feishu document layout and verifies final formatting.
+
+## Context Transfer
+
+- Stage 2 `community_insights.json/md` is a hard artifact, not a scratch summary.
+- Stage 3, Stage 4, and Stage 5 may read `community_insights.json`; Stage 3 may also read the `.md` for human-readable review.
+- Stage 6 and Stage 7 must not read Stage 2 community artifacts directly. Stage 5 must compress the needed community context into `viral_intent`, `subreddit_risk_note`, `community_insight_refs`, selected mechanism, and claim ids in its approved handoff.
 
 ## Verification
 

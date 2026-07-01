@@ -18,6 +18,7 @@
           "draft_path",
           "topic_anchor",
           "selected_variant_id",
+          "community_insight_refs",
           "supplemental_context",
           "length_multiplier",
           "viral_intent",
@@ -32,8 +33,9 @@
           "draft_path": { "type": "string", "pattern": "^05_optimized_cards/drafts_md/.+[.]md$" },
           "topic_anchor": { "type": "string" },
           "selected_variant_id": { "type": "string" },
+          "community_insight_refs": { "type": "array", "minItems": 1, "items": { "type": "string" } },
           "supplemental_context": { "type": "string" },
-          "length_multiplier": { "type": "number" },
+          "length_multiplier": { "enum": [0.3, 0.5, 1, 1.8, 2.5] },
           "viral_intent": {
             "type": "object",
             "required": ["core_hook", "emotional_trigger", "comment_engine", "must_preserve"],

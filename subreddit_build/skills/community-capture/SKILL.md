@@ -31,6 +31,8 @@ Write to `02_community_capture/`:
 - `artifacts/community_post_urls.md`
 - `artifacts/raw_posts.md`
 - `artifacts/content_maps.json`
+- `artifacts/community_insights.json`
+- `artifacts/community_insights.md`
 - `artifacts/embeddings_status.json`
 - `handoff_packet.json`
 
@@ -52,7 +54,11 @@ Write to `02_community_capture/`:
 4. When terminal, inspect artifact counts. Continue only if at least one subreddit succeeded and
    embeddings exist or the run has reached `build_embeddings/finalize`.
 5. Download only available artifacts. Do not guess download keys and do not use `HEAD`.
-6. Write `run_meta.json` and the approved handoff packet.
+6. Derive `community_insights` from the successful communities' content maps and raw/post-card
+   evidence. For each successful subreddit, write exactly these fields: community positioning,
+   high-frequency topics, transferable patterns, primary content forms, community motivations,
+   and risk warnings. Do not synthesize insights for failed subreddits.
+7. Write `run_meta.json` and the approved handoff packet.
 
 ## Common Mistakes
 

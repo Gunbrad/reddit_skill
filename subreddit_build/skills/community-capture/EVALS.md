@@ -1,8 +1,8 @@
 # EVALS - Community Capture (Stage 2)
 
 Run by a separate evaluator worker. The evaluator receives `community_capture.md`,
-`run_meta.json`, downloaded artifact summaries, this file, and both schemas. Blocking criteria
-must pass before Stage 3.
+`run_meta.json`, downloaded artifact summaries, `community_insights.json/md`, this file, and
+both schemas. Blocking criteria must pass before Stage 3.
 
 ## Gate A - API and Config Integrity
 
@@ -31,11 +31,21 @@ must pass before Stage 3.
 | C3 | Embedding status recorded | ✅ | `embeddings_status.json` exists and notes `exists/stale/count/model` if API returns them |
 | C4 | Counts consistent | ⬜ | Raw post, post card, and content map counts align with artifact summary |
 
+## Gate D - Community Insights
+
+| # | Criterion | Blocking | Pass condition |
+|---|---|:---:|---|
+| D1 | Insights exist | ✅ | `community_insights.json` and `.md` exist and are listed in the handoff |
+| D2 | Successful communities covered | ✅ | Every successful subreddit has one insight object; no failed subreddit is presented as analyzed |
+| D3 | Six required insight fields | ✅ | Each subreddit includes positioning, high-frequency topics, transferable patterns, primary content forms, community motivations, and risk warnings |
+| D4 | Evidence-grounded | ✅ | Insights cite or clearly derive from content maps/raw post patterns, not generic Reddit advice |
+
 ## Failure -> action
 
 - A/B blocking fail -> rerun the stage with corrected API/config handling.
 - C1/C2 fail -> stop and ask for user direction; downstream retrieval cannot work.
 - C3 fail -> keep polling if run is still building embeddings; otherwise record the blocker.
+- D fail -> repair the insight artifact before Stage 3; downstream Topic Cards must not proceed without it.
 
 ## Reviewer prompt (MANDATORY evaluator worker)
 
@@ -43,4 +53,6 @@ must pass before Stage 3.
 project APIs, validate subreddit count/limits, poll the long run with heartbeat evidence, check
 artifact status after terminal state, and explicitly record successful vs failed subreddits
 without starting a补抓 run? Are content maps and embeddings status available for retrieval?
+Do community_insights.json/md cover every successful subreddit with the six required fields and
+evidence-grounded risks/patterns?
 List every violation and whether it blocks Stage 3."

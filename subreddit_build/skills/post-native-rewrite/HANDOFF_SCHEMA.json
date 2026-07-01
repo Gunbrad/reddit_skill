@@ -9,10 +9,9 @@
     "inputs_read": { "type": "array", "items": { "type": "string" } },
     "outputs": {
       "type": "object",
-      "required": ["native_posts_path", "final_posts_path", "viral_intent_preservation", "fact_brand_safety"],
+      "required": ["native_posts_path", "viral_intent_preservation"],
       "properties": {
         "native_posts_path": { "const": "06_optimized/native_posts.md" },
-        "final_posts_path": { "const": "06_optimized/final_posts.md" },
         "viral_intent_preservation": {
           "type": "array",
           "items": {
@@ -25,19 +24,6 @@
               "comment_engine": { "type": "string" },
               "must_preserve": { "type": "array", "items": { "type": "string" } },
               "verdict": { "enum": ["pass", "fail"] }
-            },
-            "additionalProperties": false
-          }
-        },
-        "fact_brand_safety": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["post_id", "verdict", "notes"],
-            "properties": {
-              "post_id": { "type": "string" },
-              "verdict": { "enum": ["pass", "fail"] },
-              "notes": { "type": "string" }
             },
             "additionalProperties": false
           }

@@ -6,7 +6,7 @@
 
 You are the Stage 3 community-topic-retrieval generator worker. Create a semantic retrieval
 round from the user's topic requirement, generate Topic Cards grounded in retrieved community
-posts, and write the Topic Cards to a Feishu topic document.
+posts plus Stage 2 community insights, and write the Topic Cards to a Feishu topic document.
 
 ### Required instruction files
 
@@ -18,7 +18,6 @@ Read in order:
 4. `repo:subreddit_build/skills/subreddit-build-workflow/conventions.md`
 5. `repo:subreddit_build/skills/subreddit-build-workflow/PIPELINE_CONTRACT.md`
 6. `repo:subreddit_build/skills/community-topic-retrieval/SKILL.md`
-7. `workspace:reddit/接口test/新工作流接口测试/smartcontent_社区建设功能_API接口文档.md`
 
 ### Optional instruction files
 
@@ -30,6 +29,8 @@ Read in order:
 - `run:02_community_capture/handoff_packet.json`
 - `run:02_community_capture/run_meta.json`
 - `run:02_community_capture/artifacts/content_maps.json`
+- `run:02_community_capture/artifacts/community_insights.json`
+- `run:02_community_capture/artifacts/community_insights.md`
 - `run:02_community_capture/artifacts/embeddings_status.json`
 - `run:global/product_fact_index.json`
 - `run:global/claim_boundary_table.json`
@@ -61,6 +62,8 @@ Read in order:
 - `02_community_capture/handoff_packet.json`
 - `02_community_capture/run_meta.json`
 - `02_community_capture/artifacts/content_maps.json`
+- `02_community_capture/artifacts/community_insights.json`
+- `02_community_capture/artifacts/community_insights.md`
 - `02_community_capture/artifacts/embeddings_status.json`
 - Files created under `03_topic_retrieval/`.
 

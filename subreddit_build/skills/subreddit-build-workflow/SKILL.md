@@ -47,17 +47,20 @@ with a fresh task/run that receives only the `stage_input_packet`, and record th
 | Stage | Skill | Canonical output |
 |---|---|---|
 | 1 | `product-research` | `01_product_brief/product_brief.md`, `global/*` |
-| 2 | `community-capture` | `02_community_capture/community_capture.md`, SmartContent run ids, raw posts, post cards, content maps |
+| 2 | `community-capture` | `02_community_capture/community_capture.md`, SmartContent run ids, raw posts, post cards, content maps, community insights |
 | 3 | `community-topic-retrieval` | `03_topic_retrieval/topic_cards.md`, `topic_cards.json`, topic Feishu doc |
 | 4 | `mechanism-variant-selection` | `04_mechanism_selection/mechanism_selection.md`, applied variants |
 | 5 | `community-card-draft-generation` | `05_optimized_cards/optimization.md`, `drafts_md/*`, viral-intent handoff |
-| 6a | `post-native-rewrite` | `06_optimized/native_posts.md`, `06_optimized/final_posts.md` |
+| 6 | `post-optimization` | coordinates 6a/6b/6c/6d and writes `06_optimized/handoff_packet.json` |
+| 6a | `post-native-rewrite` | `06_optimized/native_posts.md` |
+| 6b | `post-fact-brand-check` | `06_optimized/checked_posts.md` |
+| 6c | `post-subreddit-image` | `06_optimized/final_posts.md`, optional `06_optimized/images/*` |
 | 6d | `post-feishu-publish` | `06_optimized/feishu_links.md` |
 | 7 | `feishu-formatting` | `07_format/format_report.md` |
 
-The `6a` and `6d` labels intentionally mirror the previous workflow. In this community
-builder first version, fact/brand safety and subreddit packaging are folded into the native
-rewrite and publishing evals instead of separate `6b/6c` workers.
+Stage 6 is a coordinator, matching the previous workflow shape. Only the Stage 6 coordinator
+may launch sub-workers; each 6a/6b/6c/6d worker receives only its own approved input packet and
+approved upstream sub-stage artifacts.
 
 ## Handoff Rules
 

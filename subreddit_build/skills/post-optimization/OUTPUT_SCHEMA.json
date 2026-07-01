@@ -1,0 +1,39 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 6 Post Optimization Output",
+  "type": "object",
+  "required": ["stage_id", "artifact_paths", "sub_stage_results"],
+  "properties": {
+    "stage_id": { "const": "stage_6_post_optimization" },
+    "artifact_paths": {
+      "type": "object",
+      "required": ["native_posts", "checked_posts", "final_posts", "feishu_links"],
+      "properties": {
+        "native_posts": { "const": "06_optimized/native_posts.md" },
+        "checked_posts": { "const": "06_optimized/checked_posts.md" },
+        "final_posts": { "const": "06_optimized/final_posts.md" },
+        "feishu_links": { "const": "06_optimized/feishu_links.md" },
+        "image_prompts": { "const": "06_optimized/images/prompts.md" },
+        "image_feishu": { "const": "06_optimized/images/image_feishu.md" }
+      },
+      "additionalProperties": false
+    },
+    "sub_stage_results": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "required": ["sub_stage_id", "worker_role", "artifact_path", "eval_verdict"],
+        "properties": {
+          "sub_stage_id": { "enum": ["6a_content_optimization", "6b_fact_brand_check", "6c_subreddit_image_packaging", "6d_feishu_publish"] },
+          "worker_role": { "enum": ["isolated_generator_worker", "isolated_evaluator_worker"] },
+          "artifact_path": { "type": "string" },
+          "eval_verdict": { "enum": ["pass", "fail"] }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}
+

@@ -9,7 +9,7 @@
     "inputs_read": { "type": "array", "items": { "type": "string" } },
     "outputs": {
       "type": "object",
-      "required": ["project_id", "run_id", "successful_subreddits", "failed_subreddits", "run_meta", "content_maps", "embeddings_status"],
+      "required": ["project_id", "run_id", "successful_subreddits", "failed_subreddits", "run_meta", "content_maps", "community_insights_json", "community_insights_md", "embeddings_status"],
       "properties": {
         "project_id": { "type": "string" },
         "run_id": { "type": "string" },
@@ -19,6 +19,8 @@
         "community_capture_summary": { "const": "02_community_capture/community_capture.md" },
         "raw_posts_md": { "const": "02_community_capture/artifacts/raw_posts.md" },
         "content_maps": { "const": "02_community_capture/artifacts/content_maps.json" },
+        "community_insights_json": { "const": "02_community_capture/artifacts/community_insights.json" },
+        "community_insights_md": { "const": "02_community_capture/artifacts/community_insights.md" },
         "embeddings_status": { "const": "02_community_capture/artifacts/embeddings_status.json" }
       },
       "additionalProperties": false

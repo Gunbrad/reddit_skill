@@ -1,6 +1,6 @@
 ﻿---
 name: post-feishu-publish
-description: Use after final_posts.md is ready from native rewrite, when writing optimized Reddit posts into a Feishu 帖子 doc, optionally creating the 生图 doc when images exist, setting docs public-editable, and ensuring the Topic Card doc exists. Stage 6d of the subreddit build workflow.
+description: Use after Stage 6c final_posts.md is ready, when writing optimized Reddit posts into a Feishu 帖子 doc, optionally creating the 生图 doc when images exist, setting docs public-editable, and ensuring the Topic Card doc exists. Stage 6d of the subreddit build workflow.
 ---
 
 # Post Feishu Publish Prep (Stage 6d)
@@ -19,7 +19,7 @@ images) or 3 (with images). Anchors must point to the exact same post.
 Run as an isolated worker (CONTEXT_CONTRACT.md). You receive ONLY:
 - Global: run folder, `run_config.json`, `conventions.md`, `global/product_fact_index.json`,
   `global/claim_boundary_table.json`, and `global/brand_safety_rules.md`.
-- Stage-local input: `06_optimized/final_posts.md`, `06_optimized/handoff_packet.json`,
+- Stage-local input: `06_optimized/final_posts.md`, `06_optimized/6c_handoff_packet.json`,
   optional `06_optimized/images/`, and `03_topic_retrieval/topic_cards.md` +
   `03_topic_retrieval/feishu_links.md` (to verify / create the Topic Card doc).
 - Feishu access via the `lark-doc` / `lark-drive` skills (first run may need `lark-shared`).

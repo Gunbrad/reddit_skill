@@ -7,10 +7,9 @@
     "stage_id": { "const": "stage_6a_post_native_rewrite" },
     "artifact_paths": {
       "type": "object",
-      "required": ["native_posts", "final_posts"],
+      "required": ["native_posts"],
       "properties": {
-        "native_posts": { "const": "06_optimized/native_posts.md" },
-        "final_posts": { "const": "06_optimized/final_posts.md" }
+        "native_posts": { "const": "06_optimized/native_posts.md" }
       },
       "additionalProperties": false
     },
@@ -19,16 +18,15 @@
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["post_id", "title", "backup_titles", "body", "comment_design", "target_subreddit", "viral_intent_preserved", "fact_brand_safe"],
+        "required": ["post_id", "title", "backup_titles", "body", "comment_design", "viral_intent_preserved"],
         "properties": {
           "post_id": { "type": "string" },
           "title": { "type": "string" },
           "backup_titles": { "type": "array", "minItems": 3, "items": { "type": "string" } },
           "body": { "type": "string" },
           "comment_design": { "type": "string" },
-          "target_subreddit": { "type": "string" },
-          "viral_intent_preserved": { "type": "boolean" },
-          "fact_brand_safe": { "type": "boolean" }
+          "image_idea": { "type": ["string", "null"] },
+          "viral_intent_preserved": { "type": "boolean" }
         },
         "additionalProperties": false
       }
