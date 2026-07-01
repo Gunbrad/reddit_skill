@@ -1,0 +1,31 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 7 Feishu Formatting Output",
+  "type": "object",
+  "required": ["stage_id", "artifact_paths", "formatting_result"],
+  "properties": {
+    "stage_id": { "const": "stage_7_feishu_formatting" },
+    "artifact_paths": {
+      "type": "object",
+      "required": ["format_report"],
+      "properties": {
+        "format_report": { "const": "07_format/format_report.md" }
+      },
+      "additionalProperties": false
+    },
+    "formatting_result": {
+      "type": "object",
+      "required": ["post_doc_url", "headings_valid", "resources_preserved", "brand_highlighted", "permissions_valid"],
+      "properties": {
+        "post_doc_url": { "type": "string" },
+        "headings_valid": { "type": "boolean" },
+        "resources_preserved": { "type": "boolean" },
+        "brand_highlighted": { "type": "boolean" },
+        "permissions_valid": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
+

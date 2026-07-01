@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 3 Community Topic Retrieval Handoff",
+  "type": "object",
+  "required": ["stage_id", "status", "inputs_read", "outputs", "eval_result", "open_questions"],
+  "properties": {
+    "stage_id": { "const": "stage_3_community_topic_retrieval" },
+    "status": { "enum": ["draft", "pass", "fail"] },
+    "inputs_read": { "type": "array", "items": { "type": "string" } },
+    "outputs": {
+      "type": "object",
+      "required": ["project_id", "run_id", "round_id", "topic_requirement", "topic_cards_json", "topic_cards_md", "reference_post_cards", "topic_doc_url"],
+      "properties": {
+        "project_id": { "type": "string" },
+        "run_id": { "type": "string" },
+        "round_id": { "type": "string" },
+        "topic_requirement": { "type": "string" },
+        "topic_cards_json": { "const": "03_topic_retrieval/topic_cards.json" },
+        "topic_cards_md": { "const": "03_topic_retrieval/topic_cards.md" },
+        "reference_post_cards": { "const": "03_topic_retrieval/reference_post_cards.json" },
+        "topic_doc_url": { "type": "string" },
+        "feishu_links": { "const": "03_topic_retrieval/feishu_links.md" }
+      },
+      "additionalProperties": false
+    },
+    "eval_result": {
+      "type": "object",
+      "required": ["blocking", "score", "threshold", "retry_needed", "verdict"],
+      "properties": {
+        "blocking": { "enum": ["pass", "fail"] },
+        "score": { "type": "number" },
+        "threshold": { "const": 80 },
+        "retry_needed": { "type": "boolean" },
+        "verdict": { "enum": ["pass", "fail"] }
+      },
+      "additionalProperties": true
+    },
+    "open_questions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

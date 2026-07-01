@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 4 Mechanism Variant Selection Handoff",
+  "type": "object",
+  "required": ["stage_id", "status", "inputs_read", "outputs", "eval_result", "open_questions"],
+  "properties": {
+    "stage_id": { "const": "stage_4_mechanism_variant_selection" },
+    "status": { "enum": ["draft", "pass", "fail"] },
+    "inputs_read": { "type": "array", "items": { "type": "string" } },
+    "outputs": {
+      "type": "object",
+      "required": ["project_id", "run_id", "round_id", "applied_variants", "mechanism_selection", "topic_cards_json", "topic_doc_url"],
+      "properties": {
+        "project_id": { "type": "string" },
+        "run_id": { "type": "string" },
+        "round_id": { "type": "string" },
+        "applied_variants": { "const": "04_mechanism_selection/applied_variants.json" },
+        "variant_history": { "const": "04_mechanism_selection/variant_history.json" },
+        "mechanism_selection": { "const": "04_mechanism_selection/mechanism_selection.md" },
+        "topic_cards_json": { "const": "03_topic_retrieval/topic_cards.json" },
+        "reference_post_cards": { "const": "03_topic_retrieval/reference_post_cards.json" },
+        "topic_doc_url": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "eval_result": {
+      "type": "object",
+      "required": ["blocking", "score", "threshold", "retry_needed", "verdict"],
+      "properties": {
+        "blocking": { "enum": ["pass", "fail"] },
+        "score": { "type": "number" },
+        "threshold": { "const": 80 },
+        "retry_needed": { "type": "boolean" },
+        "verdict": { "enum": ["pass", "fail"] }
+      },
+      "additionalProperties": true
+    },
+    "open_questions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

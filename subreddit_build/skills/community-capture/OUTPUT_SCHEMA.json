@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 2 Community Capture Output",
+  "type": "object",
+  "required": ["stage_id", "artifact_paths", "smartcontent", "capture_result"],
+  "properties": {
+    "stage_id": { "const": "stage_2_community_capture" },
+    "artifact_paths": {
+      "type": "object",
+      "required": ["summary", "run_meta", "content_maps", "embeddings_status"],
+      "properties": {
+        "summary": { "const": "02_community_capture/community_capture.md" },
+        "run_meta": { "const": "02_community_capture/run_meta.json" },
+        "community_post_urls_json": { "const": "02_community_capture/artifacts/community_post_urls.json" },
+        "community_post_urls_md": { "const": "02_community_capture/artifacts/community_post_urls.md" },
+        "raw_posts_md": { "const": "02_community_capture/artifacts/raw_posts.md" },
+        "content_maps": { "const": "02_community_capture/artifacts/content_maps.json" },
+        "embeddings_status": { "const": "02_community_capture/artifacts/embeddings_status.json" }
+      },
+      "additionalProperties": false
+    },
+    "smartcontent": {
+      "type": "object",
+      "required": ["project_id", "run_id", "run_type"],
+      "properties": {
+        "project_id": { "type": "string" },
+        "run_id": { "type": "string" },
+        "run_type": { "const": "community_builder_rpa_init" }
+      },
+      "additionalProperties": false
+    },
+    "capture_result": {
+      "type": "object",
+      "required": ["status", "requested_subreddits", "successful_subreddits", "failed_subreddits", "raw_posts_count", "post_cards_count", "content_maps_count"],
+      "properties": {
+        "status": { "type": "string" },
+        "requested_subreddits": { "type": "array", "items": { "type": "string" }, "minItems": 1, "maxItems": 6 },
+        "successful_subreddits": { "type": "array", "items": { "type": "string" } },
+        "failed_subreddits": { "type": "array", "items": { "type": "string" } },
+        "raw_posts_count": { "type": "integer", "minimum": 0 },
+        "post_cards_count": { "type": "integer", "minimum": 0 },
+        "content_maps_count": { "type": "integer", "minimum": 0 },
+        "embeddings_ready": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

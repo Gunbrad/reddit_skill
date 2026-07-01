@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 2 Community Capture Handoff",
+  "type": "object",
+  "required": ["stage_id", "status", "inputs_read", "outputs", "eval_result", "open_questions"],
+  "properties": {
+    "stage_id": { "const": "stage_2_community_capture" },
+    "status": { "enum": ["draft", "pass", "fail"] },
+    "inputs_read": { "type": "array", "items": { "type": "string" } },
+    "outputs": {
+      "type": "object",
+      "required": ["project_id", "run_id", "successful_subreddits", "failed_subreddits", "run_meta", "content_maps", "embeddings_status"],
+      "properties": {
+        "project_id": { "type": "string" },
+        "run_id": { "type": "string" },
+        "successful_subreddits": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "failed_subreddits": { "type": "array", "items": { "type": "string" } },
+        "run_meta": { "const": "02_community_capture/run_meta.json" },
+        "community_capture_summary": { "const": "02_community_capture/community_capture.md" },
+        "raw_posts_md": { "const": "02_community_capture/artifacts/raw_posts.md" },
+        "content_maps": { "const": "02_community_capture/artifacts/content_maps.json" },
+        "embeddings_status": { "const": "02_community_capture/artifacts/embeddings_status.json" }
+      },
+      "additionalProperties": false
+    },
+    "eval_result": {
+      "type": "object",
+      "required": ["blocking", "score", "threshold", "retry_needed", "verdict"],
+      "properties": {
+        "blocking": { "enum": ["pass", "fail"] },
+        "score": { "type": "number" },
+        "threshold": { "const": 80 },
+        "retry_needed": { "type": "boolean" },
+        "verdict": { "enum": ["pass", "fail"] }
+      },
+      "additionalProperties": true
+    },
+    "open_questions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

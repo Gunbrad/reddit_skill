@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 4 Mechanism Variant Selection Output",
+  "type": "object",
+  "required": ["stage_id", "artifact_paths", "selections"],
+  "properties": {
+    "stage_id": { "const": "stage_4_mechanism_variant_selection" },
+    "artifact_paths": {
+      "type": "object",
+      "required": ["mechanism_selection", "variant_history", "applied_variants"],
+      "properties": {
+        "mechanism_selection": { "const": "04_mechanism_selection/mechanism_selection.md" },
+        "variant_history": { "const": "04_mechanism_selection/variant_history.json" },
+        "applied_variants": { "const": "04_mechanism_selection/applied_variants.json" }
+      },
+      "additionalProperties": false
+    },
+    "selections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["topic_id", "generated_variant_count", "selected_variant_id", "applied", "selection_rationale"],
+        "properties": {
+          "topic_id": { "type": "string" },
+          "generated_variant_count": { "const": 8 },
+          "selected_variant_id": { "type": "string" },
+          "applied": { "type": "boolean" },
+          "expression_mechanism": { "type": "string" },
+          "brand_exposure_method": { "type": "string" },
+          "needs_extra_material": { "type": "boolean" },
+          "required_material": { "type": ["string", "null"] },
+          "selection_rationale": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

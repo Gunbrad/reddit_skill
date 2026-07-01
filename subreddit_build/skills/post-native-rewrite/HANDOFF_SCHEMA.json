@@ -1,0 +1,53 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 6a Native Rewrite Handoff",
+  "type": "object",
+  "required": ["stage_id", "status", "inputs_read", "outputs", "eval_result", "open_questions"],
+  "properties": {
+    "stage_id": { "const": "stage_6a_post_native_rewrite" },
+    "status": { "enum": ["draft", "pass", "fail"] },
+    "inputs_read": { "type": "array", "items": { "type": "string" } },
+    "outputs": {
+      "type": "object",
+      "required": ["native_posts_path", "final_posts_path", "viral_intent_preservation", "fact_brand_safety"],
+      "properties": {
+        "native_posts_path": { "const": "06_optimized/native_posts.md" },
+        "final_posts_path": { "const": "06_optimized/final_posts.md" },
+        "viral_intent_preservation": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["post_id", "core_hook", "emotional_trigger", "comment_engine", "must_preserve", "verdict"],
+            "properties": {
+              "post_id": { "type": "string" },
+              "core_hook": { "type": "string" },
+              "emotional_trigger": { "type": "string" },
+              "comment_engine": { "type": "string" },
+              "must_preserve": { "type": "array", "items": { "type": "string" } },
+              "verdict": { "enum": ["pass", "fail"] }
+            },
+            "additionalProperties": false
+          }
+        },
+        "fact_brand_safety": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["post_id", "verdict", "notes"],
+            "properties": {
+              "post_id": { "type": "string" },
+              "verdict": { "enum": ["pass", "fail"] },
+              "notes": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "eval_result": { "type": "object", "required": ["blocking", "score", "retry_needed", "verdict"], "additionalProperties": true },
+    "open_questions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}
+

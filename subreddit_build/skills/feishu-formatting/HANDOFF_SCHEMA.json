@@ -1,0 +1,44 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 7 Handoff Packet",
+  "type": "object",
+  "required": ["stage_id", "status", "inputs_read", "outputs", "eval_result", "open_questions"],
+  "properties": {
+    "stage_id": { "const": "stage_7_feishu_formatting" },
+    "status": { "enum": ["draft", "pass", "fail"] },
+    "inputs_read": { "type": "array", "items": { "type": "string" } },
+    "outputs": {
+      "type": "object",
+      "required": ["format_report_path", "final_doc_urls", "formatting_verdict"],
+      "properties": {
+        "format_report_path": { "const": "07_format/format_report.md" },
+        "final_doc_urls": {
+          "type": "object",
+          "required": ["topic_doc_url", "post_doc_url"],
+          "properties": {
+            "topic_doc_url": { "type": "string" },
+            "post_doc_url": { "type": "string" },
+            "image_doc_url": { "type": ["string", "null"] }
+          },
+          "additionalProperties": false
+        },
+        "formatting_verdict": { "enum": ["pass", "fail"] }
+      },
+      "additionalProperties": false
+    },
+    "eval_result": {
+      "type": "object",
+      "required": ["blocking", "score", "retry_needed", "verdict"],
+      "properties": {
+        "blocking": { "enum": ["pass", "fail"] },
+        "score": { "type": "number" },
+        "retry_needed": { "type": "boolean" },
+        "verdict": { "enum": ["pass", "fail"] }
+      },
+      "additionalProperties": true
+    },
+    "open_questions": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}
+

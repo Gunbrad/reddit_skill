@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 5 Community Card Draft Generation Output",
+  "type": "object",
+  "required": ["stage_id", "artifact_paths", "chosen_cards", "draft_jobs"],
+  "properties": {
+    "stage_id": { "const": "stage_5_community_card_draft_generation" },
+    "artifact_paths": {
+      "type": "object",
+      "required": ["optimization", "draft_jobs_receipt", "drafts_dir"],
+      "properties": {
+        "optimization": { "const": "05_optimized_cards/optimization.md" },
+        "draft_jobs_receipt": { "const": "05_optimized_cards/draft_jobs_receipt.json" },
+        "drafts_dir": { "const": "05_optimized_cards/drafts_md" }
+      },
+      "additionalProperties": false
+    },
+    "chosen_cards": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["post_id", "topic_id", "topic_anchor", "selected_variant_id", "supplemental_context", "length_multiplier", "draft_path"],
+        "properties": {
+          "post_id": { "type": "string" },
+          "topic_id": { "type": "string" },
+          "topic_anchor": { "type": "string" },
+          "selected_variant_id": { "type": "string" },
+          "supplemental_context": { "type": "string" },
+          "length_multiplier": { "type": "number" },
+          "draft_path": { "type": "string", "pattern": "^05_optimized_cards/drafts_md/.+[.]md$" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "draft_jobs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["job_id", "status", "requested_topic_ids", "completed_topic_ids"],
+        "properties": {
+          "job_id": { "type": "string" },
+          "status": { "type": "string" },
+          "requested_topic_ids": { "type": "array", "items": { "type": "string" } },
+          "completed_topic_ids": { "type": "array", "items": { "type": "string" } },
+          "failed_topic_ids": { "type": "array", "items": { "type": "string" } },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

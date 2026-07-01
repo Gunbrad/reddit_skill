@@ -1,0 +1,33 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 6d Feishu Publish Output",
+  "type": "object",
+  "required": ["stage_id", "artifact_paths", "deliverables"],
+  "properties": {
+    "stage_id": { "const": "stage_6d_post_feishu_publish" },
+    "artifact_paths": {
+      "type": "object",
+      "required": ["feishu_links"],
+      "properties": {
+        "feishu_links": { "const": "06_optimized/feishu_links.md" },
+        "image_feishu": { "const": "06_optimized/images/image_feishu.md" }
+      },
+      "additionalProperties": false
+    },
+    "deliverables": {
+      "type": "object",
+      "required": ["topic_doc_url", "post_doc_url", "image_doc_url", "doc_count", "permissions"],
+      "properties": {
+        "topic_doc_url": { "type": "string" },
+        "post_doc_url": { "type": "string" },
+        "image_doc_url": { "type": ["string", "null"] },
+        "doc_count": { "type": "integer", "minimum": 2, "maximum": 3 },
+        "permissions": { "enum": ["public_editable", "fail"] }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
+
+

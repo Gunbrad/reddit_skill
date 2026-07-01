@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stage 3 Community Topic Retrieval Output",
+  "type": "object",
+  "required": ["stage_id", "artifact_paths", "retrieval", "topic_cards"],
+  "properties": {
+    "stage_id": { "const": "stage_3_community_topic_retrieval" },
+    "artifact_paths": {
+      "type": "object",
+      "required": ["retrieval_round", "reference_post_cards", "topic_cards_json", "topic_cards_md", "feishu_links"],
+      "properties": {
+        "retrieval_round": { "const": "03_topic_retrieval/retrieval_round.json" },
+        "reference_post_cards": { "const": "03_topic_retrieval/reference_post_cards.json" },
+        "topic_cards_json": { "const": "03_topic_retrieval/topic_cards.json" },
+        "topic_cards_md": { "const": "03_topic_retrieval/topic_cards.md" },
+        "feishu_links": { "const": "03_topic_retrieval/feishu_links.md" }
+      },
+      "additionalProperties": false
+    },
+    "retrieval": {
+      "type": "object",
+      "required": ["project_id", "run_id", "round_id", "query", "top_k", "result_count"],
+      "properties": {
+        "project_id": { "type": "string" },
+        "run_id": { "type": "string" },
+        "round_id": { "type": "string" },
+        "query": { "type": "string" },
+        "top_k": { "type": "integer", "minimum": 1 },
+        "result_count": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "topic_cards": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["topic_id", "title_direction", "content_form", "post_format", "expression_mechanism", "brand_exposure_method", "source_card_ids", "target_subreddit", "status"],
+        "properties": {
+          "topic_id": { "type": "string" },
+          "title_direction": { "type": "string" },
+          "content_form": { "type": "string" },
+          "post_format": { "type": "string" },
+          "expression_mechanism": { "type": "string" },
+          "brand_exposure_method": { "type": "string" },
+          "needs_extra_material": { "type": "boolean" },
+          "required_material": { "type": ["string", "null"] },
+          "reference_logic": { "type": "string" },
+          "source_card_ids": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "target_subreddit": { "type": "string" },
+          "status": { "enum": ["candidate", "shortlisted"] }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}
